@@ -43,6 +43,19 @@ function setStatus(message, isError = false) {
   }, 5000);
 }
 
+function setButtonBusy(button, busy, busyLabel = "Salvando...") {
+  if (!button) return;
+  if (busy) {
+    button.dataset.defaultLabel = button.textContent;
+    button.textContent = busyLabel;
+    button.disabled = true;
+  } else {
+    button.textContent = button.dataset.defaultLabel || button.textContent;
+    delete button.dataset.defaultLabel;
+    button.disabled = false;
+  }
+}
+
 function slugify(value) {
   return value
     .normalize("NFD")
@@ -417,13 +430,17 @@ function renderEverything() {
   renderSettings();
 }
 
-async function persistCatalog(successMessage) {
+async function persistCatalog(successMessage, submitButton = null) {
+  setButtonBusy(submitButton, true);
+  setStatus("Salvando alterações...");
   try {
     catalog = await saveCatalog(catalog);
     renderEverything();
     setStatus(successMessage);
   } catch (error) {
     setStatus(error.message, true);
+  } finally {
+    setButtonBusy(submitButton, false);
   }
 }
 
@@ -538,6 +555,7 @@ document.querySelector("#add-variant").addEventListener("click", () => {
 
 productForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const submitButton = event.submitter;
   const product = getSelectedProduct();
   if (!product) return;
   try {
@@ -599,8 +617,9 @@ productForm.addEventListener("submit", async (event) => {
       ? product.sizeChart
       : null;
     product.variants = variants;
-    await persistCatalog(`${name} salvo com sucesso.`);
+    await persistCatalog(`${name} salvo com sucesso.`, submitButton);
   } catch (error) {
+    setButtonBusy(submitButton, false);
     setStatus(error.message, true);
   }
 });
@@ -616,6 +635,7 @@ document.querySelector("#delete-product").addEventListener("click", async () => 
 
 document.querySelector("#category-form").addEventListener("submit", async (event) => {
   event.preventDefault();
+  const submitButton = event.submitter;
   const nameInput = document.querySelector("#category-name");
   const name = nameInput.value.trim();
   const baseId = slugify(name);
@@ -630,11 +650,12 @@ document.querySelector("#category-form").addEventListener("submit", async (event
   }
   catalog.categories.push({ id, name });
   nameInput.value = "";
-  await persistCatalog("Categoria criada.");
+  await persistCatalog("Categoria criada.", submitButton);
 });
 
 document.querySelector("#settings-form").addEventListener("submit", async (event) => {
   event.preventDefault();
+  const submitButton = event.submitter;
   const settings = catalog.settings;
   settings.storeName = document.querySelector("#setting-store-name").value.trim();
   settings.announcement = document.querySelector("#setting-announcement").value.trim();
@@ -652,7 +673,7 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
   settings.promoPercent = Number(
     document.querySelector("#setting-promo-percent").value,
   );
-  await persistCatalog("Conteúdo da loja salvo.");
+  await persistCatalog("Conteúdo da loja salvo.", submitButton);
 });
 
 async function initialize() {
@@ -667,13 +688,17 @@ async function initialize() {
 
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const submitButton = event.submitter;
   authError.textContent = "";
   const email = document.querySelector("#admin-auth-email").value.trim();
   const password = document.querySelector("#admin-auth-password").value;
   try {
+    setButtonBusy(submitButton, true, "Entrando...");
     await login(email, password);
   } catch (error) {
     authError.textContent = "E-mail ou senha inválidos.";
+  } finally {
+    setButtonBusy(submitButton, false);
   }
 });
 

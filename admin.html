@@ -42,13 +42,16 @@
       </section>
 
       <div id="admin-content" hidden>
-        <p class="admin-status" id="admin-status" role="status" aria-live="polite"></p>
+          <p class="admin-status" id="admin-status" role="status" aria-live="polite"></p>
 
-      <nav class="admin-tabs" aria-label="Seções da administração">
-        <button class="admin-tab is-active" type="button" data-tab="products">Produtos</button>
-        <button class="admin-tab" type="button" data-tab="categories">Categorias</button>
-        <button class="admin-tab" type="button" data-tab="store-settings">Conteúdo da loja</button>
-      </nav>
+          <div class="admin-toolbar">
+            <nav class="admin-tabs" aria-label="Seções da administração">
+              <button class="admin-tab is-active" type="button" data-tab="products">Produtos</button>
+              <button class="admin-tab" type="button" data-tab="categories">Categorias</button>
+              <button class="admin-tab" type="button" data-tab="store-settings">Conteúdo da loja</button>
+            </nav>
+            <button class="button button--secondary" id="admin-logout" type="button">Sair da conta</button>
+          </div>
 
       <section class="admin-panel is-active" id="panel-products" aria-labelledby="products-heading">
         <div class="admin-section-heading">
@@ -213,7 +216,7 @@
               <textarea id="setting-hero-description" rows="3" maxlength="500" required></textarea>
             </label>
             <label class="field field--wide">
-              <span>Imagem da capa (URL) ou selecionar arquivo</span>
+              <span>Imagem da capa (URL HTTPS)</span>
               <input id="setting-hero-image" maxlength="2048" required />
               <small>Use uma URL HTTPS pública para a imagem da capa.</small>
             </label>
@@ -231,7 +234,6 @@
           </div>
         </form>
       </section>
-        <button class="button button--secondary" id="admin-logout" type="button">SAIR</button>
       </div>
     </main>
   </body>
