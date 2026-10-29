@@ -24,11 +24,30 @@ const confirmModal = document.querySelector("#admin-confirm");
 const confirmTitle = document.querySelector("#confirm-title");
 const confirmMessage = document.querySelector("#confirm-message");
 const confirmSubmit = document.querySelector("#confirm-submit");
+const closeProductEditor = document.querySelector("#close-product-editor");
+const editorStepButtons = document.querySelectorAll(".editor-step");
+const editorStepPanels = document.querySelectorAll("[data-editor-panel]");
 let catalog;
 let selectedProductId = null;
 let statusTimeout;
 let toastTimeout;
 let confirmResolve;
+
+function setEditorStep(step) {
+  editorStepButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.editorStep === step);
+  });
+  editorStepPanels.forEach((panel) => {
+    panel.classList.toggle("is-active", panel.dataset.editorPanel === step);
+  });
+}
+
+editorStepButtons.forEach((button) => {
+  button.addEventListener("click", () => setEditorStep(button.dataset.editorStep));
+});
+document.querySelectorAll("[data-step-next]").forEach((button) => {
+  button.addEventListener("click", () => setEditorStep(button.dataset.stepNext));
+});
 
 function createDefaultSizeChart() {
   return [
@@ -231,9 +250,11 @@ function renderProductList() {
 
 function renderProductEditor() {
   const product = getSelectedProduct();
+  productForm.classList.toggle("is-open", Boolean(product));
   productEmpty.hidden = Boolean(product);
   productFields.hidden = !product;
   if (!product) return;
+  setEditorStep("1");
 
   document.querySelector("#product-editor-title").textContent = product.name;
   document.querySelector("#product-id").value = product.id;
@@ -375,8 +396,13 @@ function selectProduct(productId) {
   selectedProductId = productId;
   renderProductList();
   renderProductEditor();
-  productForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+closeProductEditor.addEventListener("click", () => {
+  selectedProductId = null;
+  renderProductList();
+  renderProductEditor();
+});
 
 function renderCategories() {
   categoryList.replaceChildren();

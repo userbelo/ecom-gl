@@ -96,9 +96,17 @@
                   <p class="admin-eyebrow">EDITANDO PRODUTO</p>
                   <h3 id="product-editor-title">Produto</h3>
                 </div>
-                <span class="editor-form__hint">As alterações só aparecem na loja depois de salvar.</span>
-              </div>
+                <div class="editor-form__heading-actions">
+                  <button class="button button--secondary" id="close-product-editor" type="button">Fechar editor</button>
+                </div>
+                </div>
               <input id="product-id" type="hidden" />
+              <nav class="editor-steps" aria-label="Etapas da edição do produto">
+                <button class="editor-step is-active" type="button" data-editor-step="1">1. Informações</button>
+                <button class="editor-step" type="button" data-editor-step="2">2. Tamanhos</button>
+                <button class="editor-step" type="button" data-editor-step="3">3. Imagens e cores</button>
+              </nav>
+              <div class="editor-step-panel is-active" data-editor-panel="1">
               <div class="form-grid">
                 <label class="field field--wide">
                   <span>Nome do produto</span>
@@ -139,8 +147,13 @@
                   <small>As medidas da tabela são editáveis e aparecem somente neste produto.</small>
                 </label>
               </div>
+              <div class="editor-step-navigation">
+                <span>Informações básicas do produto</span>
+                <button class="button button--primary" type="button" data-step-next="2">Próximo: tamanhos →</button>
+              </div>
+              </div>
 
-              <section class="size-chart-editor" id="size-chart-editor" aria-labelledby="size-chart-heading" hidden>
+              <section class="editor-step-panel size-chart-editor" data-editor-panel="2" id="size-chart-editor" aria-labelledby="size-chart-heading" hidden>
                 <div class="editor-subheading size-chart-editor__heading">
                   <div>
                     <p class="admin-eyebrow">TAMANHOS BR</p>
@@ -163,8 +176,13 @@
                     <tbody id="size-chart-rows"></tbody>
                   </table>
                 </div>
+                <div class="editor-step-navigation">
+                  <button class="button button--secondary" type="button" data-step-next="1">← Voltar</button>
+                  <button class="button button--primary" type="button" data-step-next="3">Próximo: imagens →</button>
+                </div>
               </section>
 
+              <div class="editor-step-panel media-step" data-editor-panel="3">
               <div class="editor-subheading">
                 <div>
                   <p class="admin-eyebrow">VARIAÇÕES E FOTOS</p>
@@ -173,6 +191,10 @@
                 <button class="button button--secondary" id="add-variant" type="button">＋ Adicionar cor</button>
               </div>
               <div class="variant-editor-list" id="variant-editor-list"></div>
+              <div class="editor-step-navigation editor-step-navigation--end">
+                <button class="button button--secondary" type="button" data-step-next="2">← Voltar para tamanhos</button>
+              </div>
+              </div>
 
               <div class="form-actions">
                 <button class="button button--danger" id="delete-product" type="button">Remover produto</button>
