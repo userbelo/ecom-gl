@@ -132,6 +132,8 @@ function validateCatalog(catalog) {
       product.name.length > 120 ||
       typeof product.description !== "string" ||
       product.description.length > 3000 ||
+      (product.catalogOnly !== undefined &&
+        typeof product.catalogOnly !== "boolean") ||
       !Number.isSafeInteger(product.priceCents) ||
       product.priceCents < 0 ||
       !(

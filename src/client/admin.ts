@@ -276,6 +276,8 @@ function renderProductEditor() {
       ? ""
       : (product.promotionalPriceCents / 100).toFixed(2).replace(".", ",");
   document.querySelector("#product-description").value = product.description;
+  document.querySelector("#product-visibility").value =
+    product.catalogOnly ? "category" : "store";
   document.querySelector("#product-checkout").value = product.checkoutUrl;
   document.querySelector("#product-supplier-url").value =
     product.supplierUrl ?? "";
@@ -683,6 +685,7 @@ document.querySelector("#new-product").addEventListener("click", () => {
     id,
     name: "Novo produto",
     description: "",
+    catalogOnly: false,
     priceCents: 0,
     promotionalPriceCents: null,
     categoryId: catalog.categories[0].id,
@@ -816,6 +819,8 @@ productForm.addEventListener("submit", async (event) => {
     product.description = document
       .querySelector("#product-description")
       .value.trim();
+    product.catalogOnly =
+      document.querySelector("#product-visibility").value === "category";
     product.categoryId = categoryId;
     product.checkoutUrl = extractCheckoutUrl(checkoutInput);
     product.supplierUrl = supplierUrl;

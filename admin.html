@@ -126,6 +126,14 @@
                   <select id="product-category" name="categoryId" required></select>
                 </label>
                 <label class="field field--wide">
+                  <span>Onde o produto aparece</span>
+                  <select id="product-visibility">
+                    <option value="store">Vitrine e página da categoria</option>
+                    <option value="category">Somente na página da categoria</option>
+                  </select>
+                  <small>Produtos “somente na categoria” não aparecem em “Todos” nem nos filtros da vitrine.</small>
+                </label>
+                <label class="field field--wide">
                   <span>Descrição</span>
                   <textarea id="product-description" name="description" rows="4" maxlength="3000"></textarea>
                 </label>

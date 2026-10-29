@@ -724,8 +724,11 @@ function renderProductGrid() {
   if (!container) return;
   const visibleProducts =
     activeCategoryId === "all"
-      ? products
-      : products.filter((product) => product.categoryId === activeCategoryId);
+      ? products.filter((product) => !product.catalogOnly)
+      : products.filter(
+          (product) =>
+            product.categoryId === activeCategoryId && !product.catalogOnly,
+        );
   if (visibleProducts.length === 0) {
     container.replaceChildren(
       createElement(
@@ -745,7 +748,7 @@ function renderCategoryPage(categoryId) {
   const root = document.querySelector("#category-page");
   const category = categories.find((entry) => entry.id === categoryId);
   if (!root || !category) return false;
-  const visibleProducts = products.filter(
+  const categoryProducts = products.filter(
     (product) => product.categoryId === category.id,
   );
   const picture = document.createElement("picture");
@@ -760,24 +763,60 @@ function renderCategoryPage(categoryId) {
   back.href = "#inicio";
   const intro = createElement("div", "category-page__intro");
   intro.append(back);
+  const controls = createElement("div", "category-page__controls");
+  const search = document.createElement("input");
+  search.type = "search";
+  search.placeholder = "Pesquisar produto...";
+  search.setAttribute("aria-label", "Pesquisar produto na categoria");
+  const minPrice = document.createElement("input");
+  minPrice.type = "number";
+  minPrice.min = "0";
+  minPrice.placeholder = "Preço mínimo";
+  minPrice.setAttribute("aria-label", "Preço mínimo");
+  const maxPrice = document.createElement("input");
+  maxPrice.type = "number";
+  maxPrice.min = "0";
+  maxPrice.placeholder = "Preço máximo";
+  maxPrice.setAttribute("aria-label", "Preço máximo");
+  controls.append(search, minPrice, maxPrice);
   const grid = createElement("div", "product-grid", "");
   grid.setAttribute("role", "list");
-  if (visibleProducts.length) {
-    grid.append(
-      ...visibleProducts.map((product, index) => createProductCard(product, index)),
-    );
-  } else {
-    grid.append(
-      createElement(
-        "p",
-        "product-grid__empty",
-        "Ainda não há produtos nesta categoria.",
+  const renderCategoryProducts = () => {
+    const query = search.value.trim().toLocaleLowerCase("pt-BR");
+    const minimum = minPrice.value === "" ? null : Number(minPrice.value) * 100;
+    const maximum = maxPrice.value === "" ? null : Number(maxPrice.value) * 100;
+    const visibleProducts = categoryProducts.filter((product) => {
+      const currentPrice = getCurrentPriceCents(product);
+      return (
+        (!query || product.name.toLocaleLowerCase("pt-BR").includes(query)) &&
+        (minimum === null || currentPrice >= minimum) &&
+        (maximum === null || currentPrice <= maximum)
+      );
+    });
+    if (!visibleProducts.length) {
+      grid.replaceChildren(
+        createElement(
+          "p",
+          "product-grid__empty",
+          "Nenhum produto encontrado nesta categoria.",
+        ),
+      );
+      return;
+    }
+    grid.replaceChildren(
+      ...visibleProducts.map((product, index) =>
+        createProductCard(product, index),
       ),
     );
-  }
+  };
+  [search, minPrice, maxPrice].forEach((input) =>
+    input.addEventListener("input", renderCategoryProducts),
+  );
+  renderCategoryProducts();
   root.replaceChildren(
     picture,
     intro,
+    controls,
     grid,
   );
   root.hidden = false;

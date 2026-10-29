@@ -967,6 +967,9 @@ a:focus-visible {
 .category-page > picture {
   display: block;
   overflow: hidden;
+  width: min(100%, 980px);
+  margin-inline: auto;
+  border-radius: 22px;
   aspect-ratio: 2.5 / 1;
   background: #f7eaf0;
 }
@@ -981,6 +984,23 @@ a:focus-visible {
 .category-page__intro {
   max-width: 700px;
   padding: 38px 0 34px;
+}
+
+.category-page__controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) repeat(2, minmax(130px, 170px));
+  gap: 10px;
+  margin: 0 0 28px;
+}
+
+.category-page__controls input {
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid #efd3e0;
+  border-radius: 999px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 11px;
 }
 
 .category-page__back {
@@ -1870,10 +1890,19 @@ a:focus-visible {
 
   .category-page > picture {
     aspect-ratio: 750 / 380;
+    border-radius: 16px;
   }
 
   .category-page__intro {
     padding: 30px 0 28px;
+  }
+
+  .category-page__controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .category-page__controls input[type="search"] {
+    grid-column: 1 / -1;
   }
 
   .product-grid {
