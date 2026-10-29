@@ -1,9 +1,10 @@
-import { startIntro } from "./app";
+import { showStoreDirectly, startIntro } from "./app";
 
 const desktopGif = "/assets/intro/desktop.gif";
 const mobileGif = "/assets/intro/mobile.gif";
 const inviteLink = document.querySelector<HTMLAnchorElement>("#whatsapp-invite");
 const enterStoreButton = document.querySelector<HTMLButtonElement>("#enter-store");
+const skipIntroButton = document.querySelector<HTMLButtonElement>("#skip-intro");
 const introError = document.querySelector<HTMLElement>("#intro-error");
 const promoCodeButton = document.querySelector<HTMLButtonElement>("#promo-code");
 const promoFeedback = document.querySelector<HTMLElement>("#promo-feedback");
@@ -22,6 +23,14 @@ enterStoreButton.addEventListener("click", () => {
       "Não foi possível carregar a animação. Tente novamente para entrar na loja.";
     introError.hidden = false;
     enterStoreButton.disabled = false;
+  });
+});
+
+skipIntroButton.addEventListener("click", () => {
+  skipIntroButton.disabled = true;
+  showStoreDirectly().catch((error) => {
+    console.error("A loja não pôde ser aberta diretamente:", error);
+    skipIntroButton.disabled = false;
   });
 });
 

@@ -12,19 +12,10 @@ export async function startIntro({ desktopGif, mobileGif }) {
   const introGif = document.querySelector<HTMLImageElement>("#intro-gif");
   const store = document.querySelector("#store");
 
-  async function showStore() {
-    await mountProductCards(document.querySelector("#product-grid"));
-    entryPreview.hidden = true;
-    animationScreen.hidden = true;
-    store.hidden = false;
-    document.querySelector("#store-title").focus({ preventScroll: true });
-    window.scrollTo(0, 0);
-  }
-
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     welcome.hidden = true;
     entryPreview.hidden = true;
-    await showStore();
+    await showStoreDirectly();
     return;
   }
 
@@ -45,10 +36,25 @@ export async function startIntro({ desktopGif, mobileGif }) {
     entryPreview.hidden = true;
     animationScreen.hidden = false;
     await new Promise((resolve) => window.setTimeout(resolve, introDuration));
-    await showStore();
+    await showStoreDirectly();
   } catch (error) {
     animationScreen.hidden = true;
     entryPreview.hidden = false;
     throw error;
   }
+}
+
+export async function showStoreDirectly() {
+  const welcome = document.querySelector("#welcome-root");
+  const entryPreview = document.querySelector("#entry-preview");
+  const animationScreen = document.querySelector("#intro-animation");
+  const store = document.querySelector("#store");
+
+  await mountProductCards(document.querySelector("#product-grid"));
+  welcome.hidden = true;
+  entryPreview.hidden = true;
+  animationScreen.hidden = true;
+  store.hidden = false;
+  document.querySelector("#store-title").focus({ preventScroll: true });
+  window.scrollTo(0, 0);
 }

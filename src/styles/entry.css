@@ -169,6 +169,33 @@ body {
   height: 100% !important;
 }
 
+.newsletter-skip {
+  position: absolute;
+  z-index: 2;
+  top: max(20px, env(safe-area-inset-top));
+  right: max(22px, env(safe-area-inset-right));
+  padding: 7px 12px;
+  border: 1px solid rgb(255 255 255 / 62%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(255 255 255 / 10%);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.newsletter-skip:hover {
+  background: rgb(255 255 255 / 24%);
+  transform: translateY(-1px);
+}
+
+.newsletter-skip:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
 .newsletter-content {
   position: relative;
   z-index: 1;
