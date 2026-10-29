@@ -212,12 +212,41 @@
             <h2 id="categories-heading">Categorias</h2>
           </div>
         </div>
-        <p class="admin-help">As categorias aparecem como filtros na vitrine. Mova ou remova os produtos de uma categoria antes de excluí-la.</p>
+        <p class="admin-help">Crie cada categoria em apenas um lugar: <strong>Filtro</strong> aparece ao lado de “Todos”; <strong>Banner</strong> aparece somente no carrossel de imagens abaixo dos produtos. O mesmo nome não pode ser usado nos dois tipos. A imagem já deve conter todo o texto.</p>
+        <div class="category-image-guide" aria-label="Tamanhos recomendados dos banners">
+          <div>
+            <strong>DESKTOP</strong>
+            <span>1360 × 314 px recomendado</span>
+            <small>O bloco exibe 680 × 157 px. Crie em 2× para manter a qualidade, sempre na proporção 13:3.</small>
+          </div>
+          <div>
+            <strong>MOBILE</strong>
+            <span>100% × proporcional</span>
+            <small>No celular, o bloco usa a proporção 750:380 e ocupa a largura disponível.</small>
+          </div>
+        </div>
         <form class="category-create" id="category-form">
           <label class="field">
             <span>Nova categoria</span>
             <input id="category-name" maxlength="80" placeholder="Ex.: Acessórios" required />
           </label>
+          <label class="field">
+            <span>Onde ela aparece</span>
+            <select id="category-type">
+              <option value="filter">Filtro ao lado de “Todos”</option>
+              <option value="banner">Banner em carrossel</option>
+            </select>
+          </label>
+          <div class="category-create__banner-fields" id="category-create-banner-fields" hidden>
+            <label class="field">
+              <span>Imagem desktop (1360 × 314 px)</span>
+              <input id="category-desktop-image" type="url" placeholder="URL da imagem desktop" />
+            </label>
+            <label class="field">
+              <span>Imagem mobile (750 × 380 px)</span>
+              <input id="category-mobile-image" type="url" placeholder="URL da imagem mobile" />
+            </label>
+          </div>
           <button class="button button--primary" type="submit">Criar categoria</button>
         </form>
         <div class="category-list" id="category-list"></div>

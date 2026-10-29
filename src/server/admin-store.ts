@@ -73,7 +73,12 @@ function validateCatalog(catalog) {
   }
 
   const categoryIds = new Set();
+  const categoryNames = new Set();
   for (const category of catalog.categories) {
+    const normalizedCategoryName =
+      typeof category?.name === "string"
+        ? category.name.trim().toLocaleLowerCase("pt-BR")
+        : "";
     if (
       !category ||
       typeof category.id !== "string" ||
@@ -82,10 +87,37 @@ function validateCatalog(catalog) {
       !category.name.trim() ||
       category.name.length > 80 ||
       categoryIds.has(category.id)
+      ||
+      !normalizedCategoryName ||
+      categoryNames.has(normalizedCategoryName)
+      ||
+      (category.kind !== undefined &&
+        !["filter", "banner"].includes(category.kind))
+      ||
+      !["desktopImage", "mobileImage", "title", "subtitle", "buttonLabel"].every(
+        (key) =>
+          category[key] === undefined ||
+          (typeof category[key] === "string" && category[key].length <= 500),
+      )
+      ||
+      (category.desktopImage !== undefined &&
+        !isAllowedImageUrl(category.desktopImage))
+      ||
+      (category.mobileImage !== undefined &&
+        !isAllowedImageUrl(category.mobileImage))
+      ||
+      ((category.kind === "banner" ||
+        (category.kind === undefined && category.desktopImage)) &&
+        (!isAllowedImageUrl(category.desktopImage) ||
+          !isAllowedImageUrl(category.mobileImage)))
+      ||
+      (category.kind === "filter" &&
+        (category.desktopImage !== undefined || category.mobileImage !== undefined))
     ) {
       throw httpError(400, "Há uma categoria inválida ou duplicada.");
     }
     categoryIds.add(category.id);
+    categoryNames.add(normalizedCategoryName);
   }
 
   const productIds = new Set();

@@ -13,6 +13,10 @@ const productForm = document.querySelector("#product-form");
 const productEmpty = document.querySelector("#product-empty");
 const productFields = document.querySelector("#product-fields");
 const categoryList = document.querySelector("#category-list");
+const categoryType = document.querySelector("#category-type");
+const createBannerFields = document.querySelector("#category-create-banner-fields");
+const createDesktopImage = document.querySelector("#category-desktop-image");
+const createMobileImage = document.querySelector("#category-mobile-image");
 const variantEditorList = document.querySelector("#variant-editor-list");
 const authScreen = document.querySelector("#admin-auth");
 const adminApp = document.querySelector("#admin-content");
@@ -33,6 +37,10 @@ let statusTimeout;
 let toastTimeout;
 let confirmResolve;
 let persistQueue = Promise.resolve();
+
+function getCategoryKind(category) {
+  return category.kind || (category.desktopImage || category.mobileImage ? "banner" : "filter");
+}
 
 function setEditorStep(step) {
   editorStepButtons.forEach((button) => {
@@ -409,6 +417,7 @@ function renderCategories() {
   categoryList.replaceChildren();
   catalog.categories.forEach((category) => {
     const row = createElement("div", "category-row");
+    const heading = createElement("div", "category-row__heading");
     const name = createElement("strong", "", category.name);
     const usageCount = catalog.products.filter(
       (product) => product.categoryId === category.id,
@@ -418,12 +427,71 @@ function renderCategories() {
       "",
       `${usageCount} ${usageCount === 1 ? "produto" : "produtos"}`,
     );
+    heading.append(name, usage);
     const actions = createElement("div", "category-row__actions");
     const rename = document.createElement("input");
     rename.value = category.name;
     rename.maxLength = 80;
     rename.setAttribute("aria-label", `Nome da categoria ${category.name}`);
-    const saveName = createElement("button", "", "SALVAR NOME");
+    const desktopImageField = createElement("label", "category-image-field");
+    desktopImageField.append(
+      createElement("strong", "", "BANNER DESKTOP"),
+      createElement("small", "", "1360 × 314 px · exibição 680 × 157 px · proporção 13:3"),
+    );
+    const desktopImage = document.createElement("input");
+    desktopImage.type = "url";
+    desktopImage.maxLength = 2048;
+    desktopImage.value = category.desktopImage ?? catalog.settings.heroImage;
+    desktopImage.placeholder = "Cole aqui a URL da imagem desktop";
+    desktopImage.setAttribute("aria-label", `Imagem desktop de ${category.name}`);
+    desktopImageField.append(desktopImage);
+    const mobileImage = document.createElement("input");
+    const mobileImageField = createElement("label", "category-image-field");
+    mobileImageField.append(
+      createElement("strong", "", "BANNER MOBILE"),
+      createElement("small", "", "750 × 380 px · proporção 15:7,6 · horizontal compacto"),
+    );
+    mobileImage.type = "url";
+    mobileImage.maxLength = 2048;
+    mobileImage.value =
+      category.mobileImage ?? category.desktopImage ?? catalog.settings.heroImage;
+    mobileImage.placeholder = "Cole aqui a URL da imagem mobile";
+    mobileImage.setAttribute("aria-label", `Imagem mobile de ${category.name}`);
+    mobileImageField.append(mobileImage);
+    const fields = createElement("div", "category-row__fields");
+    fields.append(desktopImageField, mobileImageField);
+    const typeSelect = document.createElement("select");
+    typeSelect.setAttribute("aria-label", `Tipo da categoria ${category.name}`);
+    typeSelect.innerHTML =
+      '<option value="filter">Filtro ao lado de "Todos"</option><option value="banner">Banner em carrossel</option>';
+    typeSelect.value = getCategoryKind(category);
+    typeSelect.className = "category-row__type";
+    fields.prepend(typeSelect);
+    const syncTypeFields = () => {
+      const isBanner = typeSelect.value === "banner";
+      desktopImageField.hidden = !isBanner;
+      mobileImageField.hidden = !isBanner;
+    };
+    typeSelect.addEventListener("change", syncTypeFields);
+    syncTypeFields();
+    const transferTarget = document.createElement("select");
+    transferTarget.className = "category-row__transfer";
+    transferTarget.setAttribute(
+      "aria-label",
+      `Categoria de destino dos produtos de ${category.name}`,
+    );
+    transferTarget.append(
+      createElement("option", "", "Transferir produtos para..."),
+    );
+    catalog.categories
+      .filter((entry) => entry.id !== category.id)
+      .forEach((entry) => {
+        const option = document.createElement("option");
+        option.value = entry.id;
+        option.textContent = entry.name;
+        transferTarget.append(option);
+      });
+    const saveName = createElement("button", "", "SALVAR CATEGORIA");
     saveName.type = "button";
     saveName.addEventListener("click", async () => {
       const nextName = rename.value.trim();
@@ -431,30 +499,56 @@ function renderCategories() {
         setStatus("Informe um nome para a categoria.", true);
         return;
       }
+      const isBanner = typeSelect.value === "banner";
+      if (isBanner && (!desktopImage.value.trim() || !mobileImage.value.trim())) {
+        setStatus("Informe as imagens desktop e mobile da categoria.", true);
+        return;
+      }
       category.name = nextName;
+      category.kind = typeSelect.value;
+      if (isBanner) {
+        category.desktopImage = desktopImage.value.trim();
+        category.mobileImage = mobileImage.value.trim();
+      } else {
+        delete category.desktopImage;
+        delete category.mobileImage;
+      }
       await persistCatalog("Nome da categoria atualizado.");
     });
     const remove = createElement("button", "", "EXCLUIR");
     remove.type = "button";
-    remove.disabled = usageCount > 0;
+    remove.disabled = usageCount > 0 && transferTarget.options.length < 2;
     remove.title = usageCount
-      ? "Mova os produtos desta categoria antes de excluí-la."
+      ? "Escolha uma categoria de destino para transferir os produtos antes de excluir."
       : "Excluir categoria";
     remove.addEventListener("click", async () => {
-      if (usageCount > 0) return;
+      const targetId = transferTarget.value;
+      if (usageCount > 0 && !targetId) {
+        setStatus("Escolha a categoria que receberá os produtos antes de excluir.", true);
+        transferTarget.focus();
+        return;
+      }
       const confirmed = await askConfirmation(
         "Excluir categoria?",
-        `A categoria "${category.name}" será removida. Os produtos não serão excluídos.`,
+        usageCount > 0
+          ? `A categoria "${category.name}" será removida e seus ${usageCount} produtos serão transferidos.`
+          : `A categoria "${category.name}" será removida. Os produtos não serão excluídos.`,
         "Excluir categoria",
       );
       if (!confirmed) return;
+      if (usageCount > 0) {
+        catalog.products.forEach((product) => {
+          if (product.categoryId === category.id) product.categoryId = targetId;
+        });
+      }
       catalog.categories = catalog.categories.filter(
         (entry) => entry.id !== category.id,
       );
       await persistCatalog("Categoria removida.");
     });
+    if (usageCount > 0) actions.append(transferTarget);
     actions.append(saveName, remove);
-    row.append(name, usage, rename, actions);
+    row.append(heading, rename, fields, actions);
     categoryList.append(row);
   });
 }
@@ -755,9 +849,20 @@ document.querySelector("#category-form").addEventListener("submit", async (event
   const submitButton = event.submitter;
   const nameInput = document.querySelector("#category-name");
   const name = nameInput.value.trim();
+  const kind = categoryType.value;
   const baseId = slugify(name);
   if (!baseId) {
     setStatus("Informe um nome válido para a categoria.", true);
+    return;
+  }
+  if (
+    catalog.categories.some(
+      (category) =>
+        category.name.trim().toLocaleLowerCase("pt-BR") ===
+        name.toLocaleLowerCase("pt-BR"),
+    )
+  ) {
+    setStatus("Já existe uma categoria com esse nome.", true);
     return;
   }
   let id = baseId;
@@ -765,9 +870,26 @@ document.querySelector("#category-form").addEventListener("submit", async (event
   while (catalog.categories.some((category) => category.id === id)) {
     id = `${baseId}-${suffix++}`;
   }
-  catalog.categories.push({ id, name });
+  const category = { id, name, kind };
+  if (kind === "banner") {
+    const desktopImage = createDesktopImage.value.trim();
+    const mobileImage = createMobileImage.value.trim();
+    if (!desktopImage || !mobileImage) {
+      setStatus("Para criar um banner, informe as imagens desktop e mobile.", true);
+      return;
+    }
+    category.desktopImage = desktopImage;
+    category.mobileImage = mobileImage;
+  }
+  catalog.categories.push(category);
   nameInput.value = "";
+  createDesktopImage.value = "";
+  createMobileImage.value = "";
   await persistCatalog("Categoria criada.", submitButton);
+});
+
+categoryType.addEventListener("change", () => {
+  createBannerFields.hidden = categoryType.value !== "banner";
 });
 
 document.querySelector("#settings-form").addEventListener("submit", async (event) => {

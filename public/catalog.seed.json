@@ -14,7 +14,12 @@
   "categories": [
     {
       "id": "colecao-rehva",
-      "name": "Coleção REHVA"
+      "name": "Coleção REHVA",
+      "desktopImage": "/assets/catalog/rehva-store-cover.jpg",
+      "mobileImage": "/assets/catalog/rehva-store-cover.jpg",
+      "title": "Coleção REHVA",
+      "subtitle": "Peças para viver o seu próximo capítulo.",
+      "buttonLabel": "VER COLEÇÃO"
     }
   ],
   "products": [

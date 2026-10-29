@@ -103,6 +103,7 @@ const cartItems = new Map();
 let cartInitialized = false;
 const CART_STORAGE_KEY = "rehva-cart-v1";
 let activeCategoryId = "all";
+let categoryCarouselTimer;
 
 function normalizeProduct(product) {
   return {
@@ -642,7 +643,10 @@ function createProductCard(product, productIndex) {
 function renderCategoryFilters() {
   const filters = document.querySelector("#collection-filters");
   if (!filters) return;
-  const choices = [{ id: "all", name: "Todos" }, ...categories];
+  const choices = [
+    { id: "all", name: "Todos" },
+    ...categories.filter((category) => category.kind === "filter"),
+  ];
   filters.replaceChildren(
     ...choices.map((category) => {
       const button = createElement("button", "collection-filter", category.name);
@@ -661,6 +665,58 @@ function renderCategoryFilters() {
       return button;
     }),
   );
+}
+
+function getCategoryImage(category, type) {
+  return category[type] || category.desktopImage || category.mobileImage || "";
+}
+
+function renderCategoryBanners() {
+  const container = document.querySelector("#category-banners");
+  if (!container) return;
+  const bannerCategories = categories.filter(
+    (category) => category.kind === "banner",
+  );
+  window.clearInterval(categoryCarouselTimer);
+  if (!bannerCategories.length) {
+    container.hidden = true;
+    container.replaceChildren();
+    return;
+  }
+  container.hidden = false;
+  const track = createElement("div", "category-carousel__track");
+  bannerCategories.forEach((category) => {
+      const link = createElement("a", "category-banner");
+      link.href = `#categoria/${category.id}`;
+      link.setAttribute("aria-label", `Abrir categoria ${category.name}`);
+      const picture = document.createElement("picture");
+      const mobileSource = document.createElement("source");
+      mobileSource.media = "(max-width: 760px)";
+      mobileSource.srcset = getCategoryImage(category, "mobileImage");
+      const image = document.createElement("img");
+      image.src = getCategoryImage(category, "desktopImage");
+      image.alt = category.title || category.name;
+      picture.append(mobileSource, image);
+      link.append(picture);
+      track.append(link);
+  });
+  let currentIndex = 0;
+  const moveTo = (index) => {
+    currentIndex = (index + bannerCategories.length) % bannerCategories.length;
+    track.scrollTo({ left: currentIndex * track.clientWidth, behavior: "smooth" });
+  };
+  const previous = createElement("button", "category-carousel__arrow category-carousel__arrow--previous", "‹");
+  previous.type = "button";
+  previous.setAttribute("aria-label", "Banner anterior");
+  previous.addEventListener("click", () => moveTo(currentIndex - 1));
+  const next = createElement("button", "category-carousel__arrow category-carousel__arrow--next", "›");
+  next.type = "button";
+  next.setAttribute("aria-label", "Próximo banner");
+  next.addEventListener("click", () => moveTo(currentIndex + 1));
+  container.replaceChildren(track, previous, next);
+  if (bannerCategories.length > 1) {
+    categoryCarouselTimer = window.setInterval(() => moveTo(currentIndex + 1), 5000);
+  }
 }
 
 function renderProductGrid() {
@@ -683,6 +739,49 @@ function renderProductGrid() {
   container.replaceChildren(
     ...visibleProducts.map((product, index) => createProductCard(product, index)),
   );
+}
+
+function renderCategoryPage(categoryId) {
+  const root = document.querySelector("#category-page");
+  const category = categories.find((entry) => entry.id === categoryId);
+  if (!root || !category) return false;
+  const visibleProducts = products.filter(
+    (product) => product.categoryId === category.id,
+  );
+  const picture = document.createElement("picture");
+  const mobileSource = document.createElement("source");
+  mobileSource.media = "(max-width: 760px)";
+  mobileSource.srcset = getCategoryImage(category, "mobileImage");
+  const image = document.createElement("img");
+  image.src = getCategoryImage(category, "desktopImage");
+  image.alt = category.title || category.name;
+  picture.append(mobileSource, image);
+  const back = createElement("a", "category-page__back", "← VOLTAR À LOJA");
+  back.href = "#inicio";
+  const intro = createElement("div", "category-page__intro");
+  intro.append(back);
+  const grid = createElement("div", "product-grid", "");
+  grid.setAttribute("role", "list");
+  if (visibleProducts.length) {
+    grid.append(
+      ...visibleProducts.map((product, index) => createProductCard(product, index)),
+    );
+  } else {
+    grid.append(
+      createElement(
+        "p",
+        "product-grid__empty",
+        "Ainda não há produtos nesta categoria.",
+      ),
+    );
+  }
+  root.replaceChildren(
+    picture,
+    intro,
+    grid,
+  );
+  root.hidden = false;
+  return true;
 }
 
 function createElement(tag, className, text) {
@@ -976,9 +1075,29 @@ function renderProductDetails(productId, preferredVariant = 0) {
 
 function syncProductRoute() {
   const productId = getProductIdFromLocation();
+  const categoryMatch = window.location.hash.match(/^#categoria\/([a-z0-9-]+)$/);
+  const categoryId = categoryMatch?.[1] ?? null;
   const store = document.querySelector("#store");
   const root = document.querySelector("#product-detail");
   if (!store || !root || store.hidden) return;
+
+  const categoryPage = document.querySelector("#category-page");
+  if (categoryId && renderCategoryPage(categoryId)) {
+    root.hidden = true;
+    document.querySelector("#category-banners").hidden = true;
+    document.querySelector("#colecao").hidden = true;
+    document.querySelector(".hero").hidden = true;
+    document.querySelector(".site-footer").hidden = true;
+    store.classList.add("is-category-page");
+    window.scrollTo(0, 0);
+    return;
+  }
+  if (categoryPage) categoryPage.hidden = true;
+  document.querySelector("#category-banners").hidden = false;
+  document.querySelector("#colecao").hidden = false;
+  document.querySelector(".hero").hidden = false;
+  document.querySelector(".site-footer").hidden = false;
+  store.classList.remove("is-category-page");
 
   if (productId) {
     const product = products.find((item) => item.id === productId);
@@ -1025,12 +1144,26 @@ export async function mountProductCards(container) {
       throw new Error("O catálogo recebido está incompleto.");
     }
     products = nextCatalog.products.map(normalizeProduct);
-    categories = nextCatalog.categories;
+    categories = nextCatalog.categories.map((category) => ({
+      ...category,
+      kind:
+        category.kind ||
+        (category.desktopImage || category.mobileImage ? "banner" : "filter"),
+      desktopImage: category.desktopImage || nextCatalog.settings.heroImage,
+      mobileImage:
+        category.mobileImage ||
+        category.desktopImage ||
+        nextCatalog.settings.heroImage,
+      title: category.title || category.name,
+      subtitle: category.subtitle || "",
+      buttonLabel: category.buttonLabel || "VER COLEÇÃO",
+    }));
     if (!categories.some((category) => category.id === activeCategoryId)) {
       activeCategoryId = "all";
     }
     applyStoreSettings(nextCatalog.settings);
     renderCategoryFilters();
+    renderCategoryBanners();
     renderProductGrid();
     syncProductRoute();
   };
