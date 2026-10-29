@@ -34,7 +34,14 @@ export async function getCatalog() {
 }
 
 export async function saveCatalog(catalog: unknown) {
-  if (!auth.currentUser) {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Sua sessão expirou. Entre novamente para salvar.");
+  }
+
+  try {
+    await user.getIdToken();
+  } catch {
     throw new Error("Sua sessão expirou. Entre novamente para salvar.");
   }
 
@@ -44,20 +51,31 @@ export async function saveCatalog(catalog: unknown) {
     ),
   );
 
-  try {
-    await set(ref(database, "catalog"), cleanCatalog);
-    return cleanCatalog;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    if (message.includes("PERMISSION_DENIED")) {
-      throw new Error(
-        "O Firebase recusou o salvamento. Verifique as regras do Realtime Database e faça login novamente.",
-      );
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await set(ref(database, "catalog"), cleanCatalog);
+      return cleanCatalog;
+    } catch (error) {
+      lastError = error;
+      const code = error && typeof error === "object" && "code" in error
+        ? String(error.code)
+        : "";
+      if (code.includes("PERMISSION_DENIED")) {
+        throw new Error(
+          "O Firebase recusou o salvamento. Verifique as regras do Realtime Database e faça login novamente.",
+        );
+      }
+      if (attempt === 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, 600));
+      }
     }
-    throw new Error(
-      "Não foi possível salvar agora. Verifique sua conexão e tente novamente.",
-    );
   }
+
+  console.error("Falha persistente ao salvar o catálogo:", lastError);
+  throw new Error(
+    "Não foi possível salvar agora. Verifique sua conexão e tente novamente.",
+  );
 }
 
 export function watchCatalog(callback: (catalog: unknown) => void) {

@@ -32,6 +32,7 @@ let selectedProductId = null;
 let statusTimeout;
 let toastTimeout;
 let confirmResolve;
+let persistQueue = Promise.resolve();
 
 function setEditorStep(step) {
   editorStepButtons.forEach((button) => {
@@ -504,20 +505,24 @@ function renderEverything() {
 async function persistCatalog(successMessage, submitButton = null) {
   setButtonBusy(submitButton, true);
   setStatus("Salvando alterações...");
-  try {
-    catalog = await saveCatalog(catalog);
-    renderEverything();
-    setStatus(successMessage);
-  } catch (error) {
-    setStatus(
-      error instanceof Error
-        ? error.message
-        : "Não foi possível salvar. Tente novamente.",
-      true,
-    );
-  } finally {
-    setButtonBusy(submitButton, false);
-  }
+  const saveOperation = persistQueue.then(async () => {
+    try {
+      catalog = await saveCatalog(catalog);
+      renderEverything();
+      setStatus(successMessage);
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar. Tente novamente.",
+        true,
+      );
+    } finally {
+      setButtonBusy(submitButton, false);
+    }
+  });
+  persistQueue = saveOperation.catch(() => undefined);
+  await saveOperation;
 }
 
 function renderSettings() {
@@ -663,6 +668,9 @@ productForm.addEventListener("submit", async (event) => {
     }));
     if (variants.some((variant) => !variant.id)) {
       throw new Error("Cada cor ou opção precisa ter um nome válido.");
+    }
+    if (new Set(variants.map((variant) => variant.id)).size !== variants.length) {
+      throw new Error("As cores ou opções precisam ter nomes diferentes.");
     }
     product.name = name;
     product.priceCents = readPriceCents(
