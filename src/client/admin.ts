@@ -235,6 +235,7 @@ function renderProductEditor() {
   productFields.hidden = !product;
   if (!product) return;
 
+  document.querySelector("#product-editor-title").textContent = product.name;
   document.querySelector("#product-id").value = product.id;
   document.querySelector("#product-name").value = product.name;
   document.querySelector("#product-price").value = (product.priceCents / 100)
@@ -374,6 +375,7 @@ function selectProduct(productId) {
   selectedProductId = productId;
   renderProductList();
   renderProductEditor();
+  productForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderCategories() {
