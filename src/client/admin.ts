@@ -470,6 +470,26 @@ function readPriceCents(value) {
   return Math.round(price * 100);
 }
 
+function validateImageUrl(value, productName, variantLabel, imageIndex) {
+  if (!value) {
+    throw new Error(
+      `Informe a foto ${imageIndex + 1} da opção "${variantLabel}" de "${productName}".`,
+    );
+  }
+  if (/^https:\/\//i.test(value)) return;
+  const match = value.match(/^\/(assets\/catalog|uploads)\/(.+)$/);
+  if (
+    !match ||
+    match[2]
+      .split("/")
+      .some((segment) => !segment || segment === "." || segment === "..")
+  ) {
+    throw new Error(
+      `A foto ${imageIndex + 1} da opção "${variantLabel}" precisa ser um link HTTPS ou uma imagem local válida.`,
+    );
+  }
+}
+
 function extractCheckoutUrl(input) {
   const value = input.trim();
   let checkoutUrl = value;
@@ -641,6 +661,9 @@ productForm.addEventListener("submit", async (event) => {
   if (!product) return;
   try {
     const name = document.querySelector("#product-name").value.trim();
+    if (!name) {
+      throw new Error("Informe o nome do produto.");
+    }
     const categoryId = document.querySelector("#product-category").value;
     if (!catalog.categories.some((category) => category.id === categoryId)) {
       throw new Error("Selecione uma categoria válida.");
@@ -666,9 +689,14 @@ productForm.addEventListener("submit", async (event) => {
       label: variant.label.trim(),
       images: variant.images.map((image) => image.trim()),
     }));
-    if (variants.some((variant) => !variant.id)) {
-      throw new Error("Cada cor ou opção precisa ter um nome válido.");
-    }
+    variants.forEach((variant) => {
+      if (!variant.id) {
+        throw new Error("Cada cor ou opção precisa ter um nome válido.");
+      }
+      variant.images.forEach((image, imageIndex) => {
+        validateImageUrl(image, name, variant.label, imageIndex);
+      });
+    });
     if (new Set(variants.map((variant) => variant.id)).size !== variants.length) {
       throw new Error("As cores ou opções precisam ter nomes diferentes.");
     }
