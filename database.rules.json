@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "catalog": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}

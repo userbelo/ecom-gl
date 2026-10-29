@@ -1,0 +1,25 @@
+{
+  "name": "rehva-store",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server/server.ts",
+    "start": "tsx src/server/server.ts --production",
+    "build": "vite build",
+    "preview": "tsx src/server/server.ts --production",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@paper-design/shaders-react": "^0.0.81",
+    "firebase": "^13.1.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^6.3.5"
+  }
+}

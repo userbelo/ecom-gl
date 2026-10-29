@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Participe do grupo da REHVA no WhatsApp e acompanhe novidades, lançamentos e promoções."
+    />
+    <meta name="theme-color" content="#c90067" />
+    <title>REHVA — em breve</title>
+    <link rel="stylesheet" href="/src/styles/entry.css" />
+    <script type="module" src="/src/client/entry.ts"></script>
+  </head>
+  <body>
+    <main>
+      <section class="newsletter-screen" id="welcome-root">
+        <div class="newsletter-background" id="newsletter-background" aria-hidden="true"></div>
+        <section class="newsletter-content">
+          <div class="newsletter-inner" id="newsletter-content" aria-live="polite">
+            <h1 class="newsletter-title">Entre para o <span>REHVA Club</span></h1>
+            <p class="newsletter-description">
+              Acompanhe novidades, lançamentos e promoções especiais. Participe
+              do nosso grupo no WhatsApp e descubra o universo REHVA.
+            </p>
+            <div class="newsletter-actions">
+              <a
+                class="newsletter-cta newsletter-cta--secondary"
+                id="whatsapp-invite"
+                href="https://chat.whatsapp.com/Et4i3esSoaT9TrQwuPCel9?s=cl&amp;p=a&amp;mlu=4&amp;ilr=4"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Participar do grupo no WhatsApp
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M7 17 17 7M8 7h9v9"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </a>
+            </div>
+            <p class="newsletter-note">
+              O convite abre em outra aba. Depois, volte aqui para entrar na
+              loja quando quiser.
+            </p>
+            <p class="newsletter-error" id="intro-error" role="alert" hidden></p>
+          </div>
+        </section>
+      </section>
+
+      <section class="entry-preview" id="entry-preview" aria-label="Prévia da entrada da REHVA" hidden>
+        <picture class="intro-picture">
+          <source
+            srcset="/assets/posters/mobile.jpg"
+            media="(max-width: 700px)"
+          />
+          <img
+            src="/assets/posters/desktop.jpg"
+            alt="Prévia da animação de entrada da REHVA"
+          />
+        </picture>
+        <div class="entry-preview-overlay">
+          <p class="entry-preview-message">
+            Boas-vindas à loja REHVA
+          </p>
+          <button class="entry-start-button" id="enter-store" type="button">
+            Entrar
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path
+                d="M5 12h14m-7-7 7 7-7 7"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <p class="entry-preview-hint">Toque para começar</p>
+        </div>
+      </section>
+
+      <section
+        class="intro-animation"
+        id="intro-animation"
+        aria-label="Animação de entrada da loja"
+        aria-live="polite"
+        hidden
+      >
+        <picture class="intro-picture">
+          <source id="mobile-gif" media="(max-width: 700px)" />
+          <img id="intro-gif" alt="Animação de abertura da REHVA" />
+        </picture>
+        <div class="animation-status" id="animation-status" role="status">
+          <span class="loading-dot" aria-hidden="true"></span>
+          <span id="status-message">Abrindo sua experiência...</span>
+        </div>
+      </section>
+
+      <section class="store" id="store" aria-labelledby="store-title" hidden>
+        <div class="announcement-bar">
+          <span id="announcement-primary">SEU PRÓXIMO CAPÍTULO COMEÇA AGORA</span>
+          <span class="announcement-sparkle" aria-hidden="true">✦</span>
+          <span id="announcement-secondary">FEITO PARA BRILHAR DO SEU JEITO</span>
+        </div>
+        <header class="site-header">
+          <a class="wordmark" href="#inicio" aria-label="REHVA — início">
+            REHVA<i aria-hidden="true">✳</i>
+          </a>
+          <nav class="main-navigation" aria-label="Navegação principal">
+            <a href="#inicio">Início</a>
+            <a href="#colecao">A coleção</a>
+            <a href="#sobre">Nosso universo</a>
+          </nav>
+          <button class="cart-trigger" id="cart-trigger" type="button" aria-haspopup="dialog" aria-controls="cart-dialog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 9H6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="10" cy="20" r="1" />
+              <circle cx="18" cy="20" r="1" />
+            </svg>
+            <span>Sacola</span>
+            <span class="cart-trigger__count" id="cart-count" aria-live="polite">0</span>
+            <span class="visually-hidden" id="cart-feedback" role="status" aria-live="polite"></span>
+          </button>
+          <button
+            class="promo-ticket"
+            id="promo-code"
+            type="button"
+            aria-label="Copiar cupom REHVA10 para 10% de desconto"
+            aria-describedby="promo-feedback"
+          >
+            <span class="promo-ticket__main">
+              <span class="promo-ticket__eyebrow" id="promo-eyebrow">UM PRESENTE REHVA</span>
+              <strong class="promo-ticket__offer" id="promo-offer">10% OFF</strong>
+              <span class="promo-ticket__instruction">COPIE SEU CÓDIGO</span>
+              <span class="promo-ticket__code" id="promo-code-label">REHVA10</span>
+            </span>
+            <span class="promo-ticket__stub" aria-hidden="true">
+              <span>REHVA CLUB</span>
+              <span class="promo-ticket__copy-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="8" y="8" width="12" height="12" rx="2" />
+                  <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
+                </svg>
+              </span>
+            </span>
+          </button>
+          <span class="visually-hidden" id="promo-feedback" role="status" aria-live="polite"></span>
+        </header>
+
+        <dialog class="cart-dialog" id="cart-dialog" aria-labelledby="cart-title">
+          <div class="cart-dialog__header">
+            <div>
+              <p class="cart-dialog__eyebrow">SUA SELEÇÃO REHVA</p>
+              <h2 id="cart-title">Sua sacola</h2>
+            </div>
+            <button class="cart-dialog__close" id="cart-close" type="button" aria-label="Fechar sacola">×</button>
+          </div>
+          <div class="cart-dialog__items" id="cart-items"></div>
+          <div class="cart-dialog__footer">
+            <div class="cart-dialog__total">
+              <span>Total</span>
+              <strong id="cart-total">R$ 0,00</strong>
+            </div>
+            <p class="cart-dialog__notice" id="cart-notice" role="status" aria-live="polite"></p>
+            <a class="cart-dialog__checkout" id="cart-checkout" hidden>FINALIZAR COMPRA ↗</a>
+          </div>
+        </dialog>
+
+        <section
+          class="product-detail"
+          id="product-detail"
+          aria-labelledby="product-detail-title"
+          hidden
+        ></section>
+
+        <section class="hero" id="inicio">
+          <div class="hero-copy">
+            <p class="section-eyebrow"><span aria-hidden="true">✳</span> <span id="hero-eyebrow">LOOKBOOK REHVA</span></p>
+            <h1 id="store-title" tabindex="-1"><span id="hero-title-line-1">Toda a coleção,</span><br /><em id="hero-title-line-2">na palma da sua mão.</em></h1>
+            <p class="hero-description" id="hero-description">
+              Um convite para explorar, experimentar e se expressar sem pedir
+              licença. O seu estilo é o protagonista.
+            </p>
+            <a class="hero-button" href="#colecao">
+              Explorar o universo <span aria-hidden="true">↘</span>
+            </a>
+            <div class="hero-caption">
+              <span class="caption-line" aria-hidden="true"></span>
+              <span>SEM REGRAS. SÓ VOCÊ.</span>
+            </div>
+          </div>
+          <div
+            class="hero-art"
+            role="group"
+            aria-label="Editorial da coleção em tons de rosa"
+          >
+            <div class="hero-phone" aria-label="Capa da coleção exibida em um celular">
+              <span class="hero-phone-button hero-phone-button--top" aria-hidden="true"></span>
+              <span class="hero-phone-button hero-phone-button--middle" aria-hidden="true"></span>
+              <span class="hero-phone-button hero-phone-button--right" aria-hidden="true"></span>
+              <div class="hero-phone-screen">
+                <span class="hero-phone-camera" aria-hidden="true"></span>
+                <div class="hero-art-frame">
+                  <img
+                    id="hero-image"
+                    src="/assets/catalog/rehva-store-cover.jpg"
+                    alt="Interior da loja REHVA em tons de rosa, com clientes explorando a coleção"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="hero-sparkle hero-sparkle--top" aria-hidden="true">✳</div>
+            <div class="hero-sparkle hero-sparkle--bottom" aria-hidden="true">✦</div>
+            <div class="hero-sticker" aria-hidden="true">
+              <span>YOU</span>
+              <strong>DO<br />YOU</strong>
+            </div>
+            <p class="hero-art-note">A VIDA FICA MELHOR EM PINK</p>
+          </div>
+          <span class="hero-index" aria-hidden="true">01 — 03</span>
+        </section>
+
+        <section class="collection-section" id="colecao">
+          <div class="collection-heading">
+            <div>
+              <p class="section-eyebrow">O SEU MOMENTO, AS SUAS REGRAS</p>
+              <h2>Entre no <em>clima.</em></h2>
+            </div>
+            <p id="sobre">
+              Muito mais que uma cor: uma forma de ver o mundo com mais
+              confiança, criatividade e diversão.
+            </p>
+          </div>
+          <div
+            class="collection-filters"
+            id="collection-filters"
+            role="group"
+            aria-label="Filtrar produtos por categoria"
+          ></div>
+          <div class="product-grid" id="product-grid" role="list"></div>
+        </section>
+
+        <footer class="site-footer">
+          <a class="wordmark wordmark--footer" href="#inicio">
+            REHVA<i aria-hidden="true">✳</i>
+          </a>
+          <p>Um universo inteiro para ser quem você quiser.</p>
+          <a class="back-to-top" href="#inicio">VOLTAR AO TOPO ↑</a>
+          <a class="admin-link" href="/admin.html">ADMINISTRAR LOJA ↗</a>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>

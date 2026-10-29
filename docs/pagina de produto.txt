@@ -1,0 +1,79 @@
+// demo.tsx
+import { ProductDetailPage, ProductDetailPageProps } from "@/components/ui/product-detail-page";
+import { Tag, Ruler, Users, Info } from "lucide-react";
+
+// Mock data to be passed into the component
+const demoProps: ProductDetailPageProps = {
+  breadcrumbs: [
+    { label: "Market", href: "#" },
+    { label: "Clothing", href: "#" },
+    { label: "Lightweight Brown Bomber Jacket", href: "#" },
+  ],
+  product: {
+    name: "Lightweight Brown Bomber Jacket",
+    price: 70,
+    shippingCost: 5.60,
+    currency: "€",
+    images: [
+      "https://cdn.21st.dev/assets/mirror/eb/ebd000adfb789b3ed9ac53c3169252365c03abc8e73f029721252182c56fa5bc.jpg",
+      "https://cdn.21st.dev/assets/mirror/fc/fc6e560ff7f271b1bec59d5552d94fe37dfcfee410a5e3b0dc85ee73e24505d5.jpg",
+      "https://cdn.21st.dev/assets/mirror/c6/c6680b1a9b6bac5b55fc7662f048fb8c5fcf96f5d9c025122a86f4bf278ac157.jpg",
+    ],
+    description: "A stylish light bomber jacket, perfect for the transitional seasons. Made from breathable, water-resistant material with a zip-up front, side pockets, and a sleeve zip pocket for small essentials. Ideal for layering in spring or fall.",
+    tags: [
+      { label: "Brown", icon: Tag },
+      { label: "L Size", icon: Ruler },
+      { label: "Women", icon: Users },
+      { label: "New", icon: Info },
+    ],
+  },
+  seller: {
+    name: "Maria Johansson",
+    avatarUrl: "https://cdn.21st.dev/assets/mirror/d0/d066ce85ffca59255ef063ca3ebbcd4f31531ad3ea85bd54f59b79568d4c0fb3.jpg",
+    rating: 4.9,
+  },
+};
+
+// The demo component that renders the product page
+const ProductPageDemo = () => {
+  // Data for the "You might also like" section
+  const relatedProducts = [
+    { id: 1, src: "https://cdn.21st.dev/assets/mirror/b9/b91d9fb0af79f9d798778b443b0e21a2d568f4a535467ff44f0f2230cc101628.jpg", alt: "Similar Jacket" },
+    { id: 2, src: "https://cdn.21st.dev/assets/mirror/a9/a9ef4cca489ec66ac09e0d6c0965c8921110fbfca693eeba789fcee3f1520142.jpg", alt: "Running Shoes" },
+    { id: 3, src: "https://cdn.21st.dev/assets/mirror/52/52ce6c0662defdfc4475e2f19d48611f8f962f44c3bd44d5c11d706fd5689e68.jpg", alt: "Modern Watch" },
+    { id: 4, src: "https://cdn.21st.dev/assets/mirror/d1/d194ec77b4e949839a73249ef95d2c674912c6ec5cafb212c8d7b6d00e918565.jpg", alt: "Stylish Sunglasses" },
+  ];
+
+  return (
+    <div className="bg-muted/30">
+        {/* This container simulates the card-like appearance from the UI design */}
+        <div className="max-w-screen-xl mx-auto p-4 sm:p-6 md:p-8">
+            <div className="bg-card rounded-2xl shadow-sm">
+                <ProductDetailPage 
+                    product={demoProps.product}
+                    seller={demoProps.seller}
+                    breadcrumbs={demoProps.breadcrumbs}
+                />
+                
+                {/* "You might also like" section with real images */}
+                <div className="px-4 md:px-8 pb-8">
+                    <h2 className="text-2xl font-bold tracking-tight">You might also like</h2>
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {relatedProducts.map((item) => (
+                             <div key={item.id} className="bg-muted/50 rounded-lg aspect-square overflow-hidden group">
+                                <img 
+                                  src={item.src} 
+                                  alt={item.alt}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                             </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  );
+};
+
+export default ProductPageDemo;

@@ -1,0 +1,154 @@
+{
+  "settings": {
+    "storeName": "REHVA",
+    "announcement": "SEU PRÓXIMO CAPÍTULO COMEÇA AGORA",
+    "announcementSecondary": "FEITO PARA BRILHAR DO SEU JEITO",
+    "heroEyebrow": "LOOKBOOK REHVA",
+    "heroTitleLine1": "Toda a coleção,",
+    "heroTitleLine2": "na palma da sua mão.",
+    "heroDescription": "Um convite para explorar, experimentar e se expressar sem pedir licença. O seu estilo é o protagonista.",
+    "heroImage": "/assets/catalog/rehva-store-cover.jpg",
+    "promoCode": "REHVA10",
+    "promoPercent": 10
+  },
+  "categories": [
+    {
+      "id": "colecao-rehva",
+      "name": "Coleção REHVA"
+    }
+  ],
+  "products": [
+    {
+      "id": "rehva-look-1",
+      "name": "Look REHVA 01",
+      "description": "Uma peça selecionada para expressar seu estilo com confiança e personalidade.",
+      "priceCents": 12990,
+      "categoryId": "colecao-rehva",
+      "checkoutUrl": "https://reahva.pay.yampi.com.br/r/8ZQNKE68YV",
+      "sizeChart": [
+        { "size": "P", "bust": 80, "length": 48, "shoulders": 38 },
+        { "size": "M", "bust": 84, "length": 49, "shoulders": 39 },
+        { "size": "G", "bust": 88, "length": 50, "shoulders": 40 },
+        { "size": "GG", "bust": 92, "length": 51, "shoulders": 41 },
+        { "size": "EG", "bust": 96, "length": 52, "shoulders": 42 }
+      ],
+      "variants": [
+        {
+          "id": "rosa",
+          "label": "Rosa",
+          "color": "#ed70ae",
+          "images": [
+            "/assets/catalog/SaveClip.App_763137016_18119798522489486_6651549999609317427_n.jpg",
+            "/assets/catalog/3cdb1b7752add0d3e4f0d4b63800d656.jpg"
+          ]
+        },
+        {
+          "id": "lilas",
+          "label": "Lilás",
+          "color": "#a88bd4",
+          "images": [
+            "/assets/catalog/f9c457376f6530f756765863fdaaeb72.jpg",
+            "/assets/catalog/f893e58829e60e042300e9d3832ebf11.jpg"
+          ]
+        },
+        {
+          "id": "pink",
+          "label": "Pink",
+          "color": "#f20b83",
+          "images": [
+            "/assets/catalog/f9014afad6fb6b14302e6d1c91457855.jpg",
+            "/assets/catalog/SaveClip.App_826046770_18127507136489486_7800219321545072559_n.jpg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rehva-look-2",
+      "name": "Look REHVA 02",
+      "description": "Uma peça selecionada para expressar seu estilo com confiança e personalidade.",
+      "priceCents": 9780,
+      "categoryId": "colecao-rehva",
+      "checkoutUrl": "",
+      "sizeChart": [
+        { "size": "P", "bust": 80, "length": 48, "shoulders": 38 },
+        { "size": "M", "bust": 84, "length": 49, "shoulders": 39 },
+        { "size": "G", "bust": 88, "length": 50, "shoulders": 40 },
+        { "size": "GG", "bust": 92, "length": 51, "shoulders": 41 },
+        { "size": "EG", "bust": 96, "length": 52, "shoulders": 42 }
+      ],
+      "variants": [
+        {
+          "id": "rosa",
+          "label": "Rosa",
+          "color": "#ed70ae",
+          "images": [
+            "/assets/catalog/61uRMmyaedL._AC_SL1500_.jpg",
+            "/assets/catalog/f9599a12afb1a5a5d705548594d6d164.jpg"
+          ]
+        },
+        {
+          "id": "lilas",
+          "label": "Lilás",
+          "color": "#a88bd4",
+          "images": [
+            "/assets/catalog/7464b5ed5ea1b009d04bf84be169e7d2.jpg",
+            "/assets/catalog/watermarked_img_4311645796307961767.jpg"
+          ]
+        },
+        {
+          "id": "pink",
+          "label": "Pink",
+          "color": "#f20b83",
+          "images": [
+            "/assets/catalog/watermarked_img_4663206965466206582.jpg",
+            "/assets/catalog/PHOTO UGC.jpg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rehva-look-3",
+      "name": "Look REHVA 03",
+      "description": "Uma peça selecionada para expressar seu estilo com confiança e personalidade.",
+      "priceCents": 11900,
+      "categoryId": "colecao-rehva",
+      "checkoutUrl": "",
+      "sizeChart": [
+        { "size": "P", "bust": 80, "length": 48, "shoulders": 38 },
+        { "size": "M", "bust": 84, "length": 49, "shoulders": 39 },
+        { "size": "G", "bust": 88, "length": 50, "shoulders": 40 },
+        { "size": "GG", "bust": 92, "length": 51, "shoulders": 41 },
+        { "size": "EG", "bust": 96, "length": 52, "shoulders": 42 }
+      ],
+      "variants": [
+        {
+          "id": "rosa",
+          "label": "Rosa",
+          "color": "#ed70ae",
+          "images": [
+            "/assets/catalog/2347a6f10a7f0576a200dc0a3cdcbd4f.jpg",
+            "/assets/catalog/VIDEO.jpg"
+          ]
+        },
+        {
+          "id": "lilas",
+          "label": "Lilás",
+          "color": "#a88bd4",
+          "images": [
+            "/assets/catalog/5faebd36-7ff6-4bfe-8a8d-0a3a76b4b40a.jfif",
+            "/assets/catalog/watermarked_img_342567647017571808.jpg"
+          ]
+        },
+        {
+          "id": "pink",
+          "label": "Pink",
+          "color": "#f20b83",
+          "images": [
+            "/assets/catalog/f9599a12afb1a5a5d705548594d6d164.jpg",
+            "/assets/catalog/61uRMmyaedL._AC_SL1500_.jpg"
+          ]
+        }
+      ]
+    }
+  ]
+}

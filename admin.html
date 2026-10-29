@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#c90067" />
+    <title>Administração da loja — REHVA</title>
+    <link rel="stylesheet" href="/src/styles/admin.css" />
+    <script type="module" src="/src/client/admin.ts"></script>
+  </head>
+  <body>
+    <main class="admin-app">
+      <header class="admin-header">
+        <a class="admin-brand" href="/" aria-label="Voltar à loja REHVA">REHVA<span>✳</span></a>
+        <div class="admin-header__copy">
+          <p>PAINEL DA LOJA</p>
+          <h1>Gerencie sua vitrine.</h1>
+        </div>
+        <a class="admin-store-link" href="/">Ver loja ↗</a>
+      </header>
+
+      <aside class="admin-local-warning" role="note">
+        <strong>Painel protegido por Firebase Authentication.</strong>
+        <span>O catálogo é salvo no Firebase e as imagens devem ser informadas por links HTTPS públicos.</span>
+      </aside>
+
+      <section class="admin-auth" id="admin-auth">
+        <p class="admin-eyebrow">ACESSO RESTRITO</p>
+        <h2>Entrar no painel</h2>
+        <form id="admin-auth-form">
+          <label class="field">
+            <span>E-mail</span>
+            <input id="admin-auth-email" type="email" autocomplete="username" required />
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input id="admin-auth-password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="button button--primary" type="submit">ENTRAR</button>
+          <p class="admin-status is-error" id="admin-auth-error" role="alert"></p>
+        </form>
+      </section>
+
+      <div id="admin-content" hidden>
+        <p class="admin-status" id="admin-status" role="status" aria-live="polite"></p>
+
+      <nav class="admin-tabs" aria-label="Seções da administração">
+        <button class="admin-tab is-active" type="button" data-tab="products">Produtos</button>
+        <button class="admin-tab" type="button" data-tab="categories">Categorias</button>
+        <button class="admin-tab" type="button" data-tab="store-settings">Conteúdo da loja</button>
+      </nav>
+
+      <section class="admin-panel is-active" id="panel-products" aria-labelledby="products-heading">
+        <div class="admin-section-heading">
+          <div>
+            <p class="admin-eyebrow">CATÁLOGO</p>
+            <h2 id="products-heading">Produtos</h2>
+          </div>
+          <button class="button button--primary" id="new-product" type="button">＋ Novo produto</button>
+        </div>
+        <div class="product-admin-layout">
+          <aside class="product-list" aria-label="Produtos cadastrados">
+            <div class="product-list__heading">
+              <span>CADASTRADOS</span>
+              <span id="product-count">0</span>
+            </div>
+            <div class="product-list__items" id="product-list"></div>
+          </aside>
+
+          <form class="editor-form" id="product-form">
+            <div class="editor-empty" id="product-empty">
+              Selecione um produto para editar ou crie um novo produto.
+            </div>
+            <div id="product-fields" hidden>
+              <input id="product-id" type="hidden" />
+              <div class="form-grid">
+                <label class="field field--wide">
+                  <span>Nome do produto</span>
+                  <input id="product-name" name="name" maxlength="120" required />
+                </label>
+                <label class="field">
+                  <span>Preço de venda (R$)</span>
+                  <input id="product-price" name="price" inputmode="decimal" placeholder="129,90" required />
+                </label>
+                <label class="field">
+                  <span>Preço promocional (R$)</span>
+                  <input id="product-promotional-price" name="promotionalPrice" inputmode="decimal" placeholder="Opcional" />
+                  <small>Deixe em branco para não exibir desconto. O preço promocional deve ser menor que o preço de venda.</small>
+                </label>
+                <label class="field">
+                  <span>Categoria</span>
+                  <select id="product-category" name="categoryId" required></select>
+                </label>
+                <label class="field field--wide">
+                  <span>Descrição</span>
+                  <textarea id="product-description" name="description" rows="4" maxlength="3000"></textarea>
+                </label>
+                <label class="field field--wide">
+                  <span>Link de checkout ou HTML do botão Yampi</span>
+                  <textarea id="product-checkout" name="checkoutUrl" rows="3" placeholder="Cole o link HTTPS ou o trecho HTML do botão de checkout"></textarea>
+                  <small>O painel extrai e salva somente o endereço HTTPS do checkout; o HTML não é executado.</small>
+                </label>
+                <label class="field field--wide">
+                  <span>Link do fornecedor (uso interno)</span>
+                  <input id="product-supplier-url" name="supplierUrl" type="url" maxlength="2048" placeholder="https://..." />
+                  <small>Este endereço fica salvo apenas no cadastro administrativo e não aparece na loja.</small>
+                </label>
+                <label class="field field--wide product-clothing-toggle">
+                  <span>
+                    <input id="product-has-sizes" type="checkbox" />
+                    Produto de roupa — exibir tamanhos brasileiros e tabela de medidas
+                  </span>
+                  <small>As medidas da tabela são editáveis e aparecem somente neste produto.</small>
+                </label>
+              </div>
+
+              <section class="size-chart-editor" id="size-chart-editor" aria-labelledby="size-chart-heading" hidden>
+                <div class="editor-subheading size-chart-editor__heading">
+                  <div>
+                    <p class="admin-eyebrow">TAMANHOS BR</p>
+                    <h3 id="size-chart-heading">Tabela de medidas (cm)</h3>
+                  </div>
+                  <button class="button button--secondary" id="add-size-row" type="button">＋ Adicionar tamanho</button>
+                </div>
+                <p class="admin-help">Edite os tamanhos disponíveis e as medidas de cada peça. Deixe uma medida vazia se não se aplicar.</p>
+                <div class="size-chart-table-wrap">
+                  <table class="size-chart-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Tamanho BR</th>
+                        <th scope="col">Busto</th>
+                        <th scope="col">Comprimento</th>
+                        <th scope="col">Largura dos ombros</th>
+                        <th scope="col">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody id="size-chart-rows"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <div class="editor-subheading">
+                <div>
+                  <p class="admin-eyebrow">VARIAÇÕES E FOTOS</p>
+                  <h3>Cores e imagens</h3>
+                </div>
+                <button class="button button--secondary" id="add-variant" type="button">＋ Adicionar cor</button>
+              </div>
+              <div class="variant-editor-list" id="variant-editor-list"></div>
+
+              <div class="form-actions">
+                <button class="button button--danger" id="delete-product" type="button">Remover produto</button>
+                <button class="button button--primary" type="submit">Salvar produto</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="admin-panel" id="panel-categories" aria-labelledby="categories-heading" hidden>
+        <div class="admin-section-heading">
+          <div>
+            <p class="admin-eyebrow">ORGANIZAÇÃO</p>
+            <h2 id="categories-heading">Categorias</h2>
+          </div>
+        </div>
+        <p class="admin-help">As categorias aparecem como filtros na vitrine. Mova ou remova os produtos de uma categoria antes de excluí-la.</p>
+        <form class="category-create" id="category-form">
+          <label class="field">
+            <span>Nova categoria</span>
+            <input id="category-name" maxlength="80" placeholder="Ex.: Acessórios" required />
+          </label>
+          <button class="button button--primary" type="submit">Criar categoria</button>
+        </form>
+        <div class="category-list" id="category-list"></div>
+      </section>
+
+      <section class="admin-panel" id="panel-store-settings" aria-labelledby="settings-heading" hidden>
+        <div class="admin-section-heading">
+          <div>
+            <p class="admin-eyebrow">MARCA REHVA</p>
+            <h2 id="settings-heading">Conteúdo da loja</h2>
+          </div>
+        </div>
+        <form class="editor-form" id="settings-form">
+          <div class="form-grid">
+            <label class="field">
+              <span>Nome da loja</span>
+              <input id="setting-store-name" maxlength="100" required />
+            </label>
+            <label class="field">
+              <span>Chamada superior</span>
+              <input id="setting-announcement" maxlength="160" required />
+            </label>
+            <label class="field">
+              <span>Segunda chamada</span>
+              <input id="setting-announcement-secondary" maxlength="160" required />
+            </label>
+            <label class="field">
+              <span>Identificação da capa</span>
+              <input id="setting-hero-eyebrow" maxlength="100" required />
+            </label>
+            <label class="field">
+              <span>Título — primeira linha</span>
+              <input id="setting-title-line-1" maxlength="120" required />
+            </label>
+            <label class="field">
+              <span>Título — segunda linha</span>
+              <input id="setting-title-line-2" maxlength="120" required />
+            </label>
+            <label class="field field--wide">
+              <span>Texto da capa</span>
+              <textarea id="setting-hero-description" rows="3" maxlength="500" required></textarea>
+            </label>
+            <label class="field field--wide">
+              <span>Imagem da capa (URL) ou selecionar arquivo</span>
+              <input id="setting-hero-image" maxlength="2048" required />
+              <small>Use uma URL HTTPS pública para a imagem da capa.</small>
+            </label>
+            <label class="field">
+              <span>Código promocional</span>
+              <input id="setting-promo-code" maxlength="40" />
+            </label>
+            <label class="field">
+              <span>Desconto (%)</span>
+              <input id="setting-promo-percent" type="number" min="0" max="100" step="1" />
+            </label>
+          </div>
+          <div class="form-actions form-actions--end">
+            <button class="button button--primary" type="submit">Salvar conteúdo da loja</button>
+          </div>
+        </form>
+      </section>
+        <button class="button button--secondary" id="admin-logout" type="button">SAIR</button>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,460 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+product-detail-page.tsx
+// components/ui/product-detail-page.tsx
+import * as React from "react";
+import { ChevronRight, Star, Tag, Ruler, Users, Info, Heart, Share2, ShoppingCart, Send, Camera } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+import { cn } from "@/lib/utils"; // Your utility for merging tailwind classes
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+// Define TypeScript interfaces for component props for type safety and reusability
+interface BreadcrumbItem {
+  label: string;
+  href: string;
+}
+
+interface ProductTag {
+  label: string;
+  icon?: React.ElementType;
+}
+
+interface Seller {
+  name: string;
+  avatarUrl: string;
+  rating: number;
+}
+
+interface Product {
+  name: string;
+  price: number;
+  shippingCost: number;
+  currency: string;
+  images: string[];
+  description: string;
+  tags: ProductTag[];
+}
+
+export interface ProductDetailPageProps {
+  product: Product;
+  seller: Seller;
+  breadcrumbs: BreadcrumbItem[];
+}
+
+// A small component for rendering rating stars
+const StarRating = ({ rating, className }: { rating: number; className?: string }) => (
+  <div className={cn("flex items-center gap-0.5", className)}>
+    {[...Array(5)].map((_, i) => (
+      <Star
+        key={i}
+        className={cn(
+          "h-4 w-4",
+          i < Math.floor(rating) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50"
+        )}
+      />
+    ))}
+    <span className="ml-2 text-sm font-medium text-muted-foreground">{rating.toFixed(1)}</span>
+  </div>
+);
+
+
+export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, seller, breadcrumbs }) => {
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+
+  return (
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 bg-background text-foreground">
+      {/* Breadcrumbs Navigation */}
+      <nav aria-label="Breadcrumb" className="flex items-center text-sm text-muted-foreground mb-4">
+        {breadcrumbs.map((item, index) => (
+          <React.Fragment key={index}>
+            <a href={item.href} className="hover:text-primary transition-colors">{item.label}</a>
+            {index < breadcrumbs.length - 1 && <ChevronRight className="h-4 w-4 mx-1" />}
+          </React.Fragment>
+        ))}
+      </nav>
+
+      <div className="flex justify-between items-center mb-6">
+        <div /> {/* Spacer */}
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon">
+                <Heart className="h-5 w-5" />
+                <span className="sr-only">Favorite</span>
+            </Button>
+            <Button variant="ghost" size="icon">
+                <Share2 className="h-5 w-5" />
+                <span className="sr-only">Share</span>
+            </Button>
+        </div>
+      </div>
+
+
+      {/* Main content grid */}
+      <main className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+        {/* Image Gallery Section */}
+        <div className="flex flex-col gap-4">
+           <AnimatePresence mode="wait">
+             <motion.div
+                key={currentImageIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border"
+             >
+                <img
+                    src={product.images[currentImageIndex]}
+                    alt={`${product.name} image ${currentImageIndex + 1}`}
+                    className="object-cover w-full h-full"
+                />
+             </motion.div>
+           </AnimatePresence>
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2">
+                {product.images.map((_, index) => (
+                <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={cn(
+                    "h-2 w-2 rounded-full transition-colors",
+                    currentImageIndex === index ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                    )}
+                    aria-label={`View image ${index + 1}`}
+                />
+                ))}
+            </div>
+            <Button variant="outline" size="sm" className="gap-2">
+                <Camera className="h-4 w-4" /> Find Similar
+            </Button>
+          </div>
+        </div>
+
+        {/* Product Details Section */}
+        <div className="flex flex-col">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{product.name}</h1>
+          <div className="mt-2">
+            <span className="text-4xl font-bold">{product.currency}{product.price}</span>
+            <span className="text-sm text-muted-foreground ml-2">
+                + {product.currency}{product.shippingCost.toFixed(2)} Shipping
+            </span>
+          </div>
+
+          <div className="flex gap-2 my-6">
+            <Button size="lg" className="flex-1 gap-2"><ShoppingCart className="h-5 w-5"/> Buy Now</Button>
+            <Button size="lg" variant="outline" className="flex-1 gap-2"><Send className="h-5 w-5"/> Contact Seller</Button>
+          </div>
+
+          {/* Tags/Badges */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {product.tags.map((tag, index) => (
+              <Badge key={index} variant="secondary" className="text-sm font-normal py-1 px-3 gap-2">
+                {tag.icon && <tag.icon className="h-4 w-4" />}
+                {tag.label}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Description */}
+          <p className="text-muted-foreground leading-relaxed">
+            {product.description}
+            <a href="#" className="text-primary font-medium hover:underline ml-2">Read more</a>
+          </p>
+          
+          {/* Seller Information */}
+          <div className="mt-8 pt-6 border-t">
+             <div className="flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src={seller.avatarUrl} alt={seller.name} />
+                        <AvatarFallback>{seller.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="font-semibold">{seller.name}</p>
+                        <StarRating rating={seller.rating} />
+                    </div>
+                </div>
+                <Button variant="link" className="text-primary">
+                    All listings &rarr;
+                </Button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+demo.tsx
+// demo.tsx
+import { ProductDetailPage, ProductDetailPageProps } from "@/components/ui/product-detail-page";
+import { Tag, Ruler, Users, Info } from "lucide-react";
+
+// Mock data to be passed into the component
+const demoProps: ProductDetailPageProps = {
+  breadcrumbs: [
+    { label: "Market", href: "#" },
+    { label: "Clothing", href: "#" },
+    { label: "Lightweight Brown Bomber Jacket", href: "#" },
+  ],
+  product: {
+    name: "Lightweight Brown Bomber Jacket",
+    price: 70,
+    shippingCost: 5.60,
+    currency: "€",
+    images: [
+      "https://cdn.21st.dev/assets/mirror/eb/ebd000adfb789b3ed9ac53c3169252365c03abc8e73f029721252182c56fa5bc.jpg",
+      "https://cdn.21st.dev/assets/mirror/fc/fc6e560ff7f271b1bec59d5552d94fe37dfcfee410a5e3b0dc85ee73e24505d5.jpg",
+      "https://cdn.21st.dev/assets/mirror/c6/c6680b1a9b6bac5b55fc7662f048fb8c5fcf96f5d9c025122a86f4bf278ac157.jpg",
+    ],
+    description: "A stylish light bomber jacket, perfect for the transitional seasons. Made from breathable, water-resistant material with a zip-up front, side pockets, and a sleeve zip pocket for small essentials. Ideal for layering in spring or fall.",
+    tags: [
+      { label: "Brown", icon: Tag },
+      { label: "L Size", icon: Ruler },
+      { label: "Women", icon: Users },
+      { label: "New", icon: Info },
+    ],
+  },
+  seller: {
+    name: "Maria Johansson",
+    avatarUrl: "https://cdn.21st.dev/assets/mirror/d0/d066ce85ffca59255ef063ca3ebbcd4f31531ad3ea85bd54f59b79568d4c0fb3.jpg",
+    rating: 4.9,
+  },
+};
+
+// The demo component that renders the product page
+const ProductPageDemo = () => {
+  // Data for the "You might also like" section
+  const relatedProducts = [
+    { id: 1, src: "https://cdn.21st.dev/assets/mirror/b9/b91d9fb0af79f9d798778b443b0e21a2d568f4a535467ff44f0f2230cc101628.jpg", alt: "Similar Jacket" },
+    { id: 2, src: "https://cdn.21st.dev/assets/mirror/a9/a9ef4cca489ec66ac09e0d6c0965c8921110fbfca693eeba789fcee3f1520142.jpg", alt: "Running Shoes" },
+    { id: 3, src: "https://cdn.21st.dev/assets/mirror/52/52ce6c0662defdfc4475e2f19d48611f8f962f44c3bd44d5c11d706fd5689e68.jpg", alt: "Modern Watch" },
+    { id: 4, src: "https://cdn.21st.dev/assets/mirror/d1/d194ec77b4e949839a73249ef95d2c674912c6ec5cafb212c8d7b6d00e918565.jpg", alt: "Stylish Sunglasses" },
+  ];
+
+  return (
+    <div className="bg-muted/30">
+        {/* This container simulates the card-like appearance from the UI design */}
+        <div className="max-w-screen-xl mx-auto p-4 sm:p-6 md:p-8">
+            <div className="bg-card rounded-2xl shadow-sm">
+                <ProductDetailPage 
+                    product={demoProps.product}
+                    seller={demoProps.seller}
+                    breadcrumbs={demoProps.breadcrumbs}
+                />
+                
+                {/* "You might also like" section with real images */}
+                <div className="px-4 md:px-8 pb-8">
+                    <h2 className="text-2xl font-bold tracking-tight">You might also like</h2>
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {relatedProducts.map((item) => (
+                             <div key={item.id} className="bg-muted/50 rounded-lg aspect-square overflow-hidden group">
+                                <img 
+                                  src={item.src} 
+                                  alt={item.alt}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                             </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  );
+};
+
+export default ProductPageDemo;
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/badge
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        secondary:
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive:
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+        outline: "text-foreground",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+)
+
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  return (
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  )
+}
+
+export { Badge, badgeVariants }
+
+```
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+```tsx
+shadcn/avatar
+"use client";
+
+import * as React from "react";
+import * as AvatarPrimitive from "@radix-ui/react-avatar";
+
+import { cn } from "@/lib/utils";
+
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      className,
+    )}
+    {...props}
+  />
+));
+Avatar.displayName = AvatarPrimitive.Root.displayName;
+
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Image
+    ref={ref}
+    className={cn("aspect-square h-full w-full", className)}
+    {...props}
+  />
+));
+AvatarImage.displayName = AvatarPrimitive.Image.displayName;
+
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Fallback
+    ref={ref}
+    className={cn(
+      "flex h-full w-full items-center justify-center rounded-full bg-muted",
+      className,
+    )}
+    {...props}
+  />
+));
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
+
+export { Avatar, AvatarImage, AvatarFallback };
+
+export default Avatar;
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion, class-variance-authority, @radix-ui/react-slot, @radix-ui/react-avatar
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

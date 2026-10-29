@@ -1,0 +1,88 @@
+import { ContainerToggle, CellToggle } from "@/components/blocks/animated-toggle-layout-container"
+const PRODUCTS = [
+  {
+    id: "item-9",
+    name: "adidas",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/73/7320ea5f4679ca3c77d4fc2ef5aa67ff446bcd5d6730c32ad98693051041a3ff.jpg",
+    price: 120,
+  },
+  {
+    id: "item-8",
+    name: "nike",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/f9/f9d6f1ac5f0a79f6c8a2ec75d0a6d280481e69a625efac36a83e37407d5327b7.jpg",
+    price: 120,
+  },
+  {
+    id: "item-4",
+    name: "brooks",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/2c/2c478b4da7a616a15e6be1593fffc874019ebead69b25d326b46f6c34da760ff.jpg",
+    price: 95,
+  },
+  {
+    id: "item-2",
+    name: "nike",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/fc/fc4df115a545a004d0a1866d2975bff579195f6411787807b16f2c7b7e4c4eb4.jpg",
+    price: 79.95,
+  },
+  {
+    id: "item-5",
+    name: "salomon",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/de/de7cd4fa278ccb802053c6a498b6b427a76e0ce373c38f2fd0a2bdad888cf921.jpg",
+    price: 89.99,
+  },
+  {
+    id: "item-7",
+    name: "brooks",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/27/2747c67c386aa2b036b7574b61ae75ea3f33948fb20efe2329d356e8ebb6b3e2.jpg",
+    price: 88,
+  },
+  {
+    id: "item-1",
+    name: "nike",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/f9/f99b6da6c79147688157a428b6d6121d87c689caefb982479a97b5d1f75398c7.jpg",
+    price: 199.99,
+  },
+  {
+    id: "item-6",
+    name: "new balance",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/41/41a26e5db31cdfa971926a240aba75db68ae3d8f775f912d85732b8c5d392989.jpg",
+    price: 70,
+  },
+
+  {
+    id: "item-3",
+    name: "under armour",
+    imageUrl: "https://cdn.21st.dev/assets/mirror/30/30080492882c8a9d974dddc88a40b0fa2a0d26d78dea400f6e1e0a5580a1a86c.jpg",
+    price: 85.99,
+  },
+]
+
+export const LayoutToggleDemo = () => (
+    <div className="p-12 md:px-8">
+      <ContainerToggle className="bg-gray-50">
+        {PRODUCTS.map((product) => (
+          <CellToggle
+            key={product.id}
+            className="cursor-pointer space-y-4 overflow-hidden rounded-sm bg-white pb-6 shadow"
+          >
+            <div className="relative pb-8 pt-16"> 
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="mx-auto h-auto max-h-full max-w-[75%]"
+              />
+              <div className="absolute inset-0 z-10 bg-slate-950/5" />
+            </div>
+            <div className="flex items-center justify-between px-4">
+              <h3 className="text-sm font-semibold capitalize tracking-tight">
+                {product.name}
+              </h3>
+              <p className="text-xs tabular-nums leading-none tracking-tight text-slate-700">
+                ${product.price}
+              </p>
+            </div>
+          </CellToggle>
+        ))}
+      </ContainerToggle>
+    </div>
+)
