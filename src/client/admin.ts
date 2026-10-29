@@ -19,9 +19,16 @@ const adminApp = document.querySelector("#admin-content");
 const authForm = document.querySelector("#admin-auth-form");
 const authError = document.querySelector("#admin-auth-error");
 const logoutButton = document.querySelector("#admin-logout");
+const toast = document.querySelector("#admin-toast");
+const confirmModal = document.querySelector("#admin-confirm");
+const confirmTitle = document.querySelector("#confirm-title");
+const confirmMessage = document.querySelector("#confirm-message");
+const confirmSubmit = document.querySelector("#confirm-submit");
 let catalog;
 let selectedProductId = null;
 let statusTimeout;
+let toastTimeout;
+let confirmResolve;
 
 function createDefaultSizeChart() {
   return [
@@ -36,12 +43,43 @@ function createDefaultSizeChart() {
 function setStatus(message, isError = false) {
   adminStatus.textContent = message;
   adminStatus.classList.toggle("is-error", isError);
+  toast.textContent = message;
+  toast.classList.toggle("is-error", isError);
+  toast.hidden = false;
+  window.clearTimeout(toastTimeout);
+  toastTimeout = window.setTimeout(() => {
+    toast.hidden = true;
+  }, isError ? 7000 : 3500);
   window.clearTimeout(statusTimeout);
   statusTimeout = window.setTimeout(() => {
     adminStatus.textContent = "";
     adminStatus.classList.remove("is-error");
   }, 5000);
 }
+
+function askConfirmation(title, message, actionLabel = "Confirmar") {
+  confirmTitle.textContent = title;
+  confirmMessage.textContent = message;
+  confirmSubmit.textContent = actionLabel;
+  confirmModal.hidden = false;
+  confirmSubmit.focus();
+  return new Promise((resolve) => {
+    confirmResolve = resolve;
+  });
+}
+
+function closeConfirmation(result) {
+  confirmModal.hidden = true;
+  if (confirmResolve) {
+    confirmResolve(result);
+    confirmResolve = null;
+  }
+}
+
+confirmModal.querySelectorAll("[data-confirm-cancel]").forEach((button) => {
+  button.addEventListener("click", () => closeConfirmation(false));
+});
+confirmSubmit.addEventListener("click", () => closeConfirmation(true));
 
 function setButtonBusy(button, busy, busyLabel = "Salvando...") {
   if (!button) return;
@@ -375,7 +413,12 @@ function renderCategories() {
       : "Excluir categoria";
     remove.addEventListener("click", async () => {
       if (usageCount > 0) return;
-      if (!window.confirm(`Excluir a categoria "${category.name}"?`)) return;
+      const confirmed = await askConfirmation(
+        "Excluir categoria?",
+        `A categoria "${category.name}" será removida. Os produtos não serão excluídos.`,
+        "Excluir categoria",
+      );
+      if (!confirmed) return;
       catalog.categories = catalog.categories.filter(
         (entry) => entry.id !== category.id,
       );
@@ -627,7 +670,12 @@ productForm.addEventListener("submit", async (event) => {
 document.querySelector("#delete-product").addEventListener("click", async () => {
   const product = getSelectedProduct();
   if (!product) return;
-  if (!window.confirm(`Remover "${product.name}" da loja?`)) return;
+  const confirmed = await askConfirmation(
+    "Remover produto?",
+    `"${product.name}" será removido da vitrine. Esta ação não pode ser desfeita.`,
+    "Remover produto",
+  );
+  if (!confirmed) return;
   catalog.products = catalog.products.filter((entry) => entry.id !== product.id);
   selectedProductId = catalog.products[0]?.id ?? null;
   await persistCatalog("Produto removido da loja.");

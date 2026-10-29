@@ -41,6 +41,21 @@
         </form>
       </section>
 
+      <div class="admin-modal" id="admin-confirm" hidden>
+        <div class="admin-modal__backdrop" data-confirm-cancel></div>
+        <section class="admin-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+          <p class="admin-eyebrow">CONFIRMAÇÃO</p>
+          <h2 id="confirm-title">Confirmar ação</h2>
+          <p id="confirm-message"></p>
+          <div class="admin-modal__actions">
+            <button class="button button--secondary" type="button" data-confirm-cancel>Cancelar</button>
+            <button class="button button--danger" type="button" id="confirm-submit">Confirmar</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="admin-toast" id="admin-toast" role="status" aria-live="polite" hidden></div>
+
       <div id="admin-content" hidden>
           <p class="admin-status" id="admin-status" role="status" aria-live="polite"></p>
 
