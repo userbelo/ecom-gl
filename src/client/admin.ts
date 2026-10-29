@@ -483,7 +483,12 @@ async function persistCatalog(successMessage, submitButton = null) {
     renderEverything();
     setStatus(successMessage);
   } catch (error) {
-    setStatus(error.message, true);
+    setStatus(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível salvar. Tente novamente.",
+      true,
+    );
   } finally {
     setButtonBusy(submitButton, false);
   }

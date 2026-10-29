@@ -34,8 +34,30 @@ export async function getCatalog() {
 }
 
 export async function saveCatalog(catalog: unknown) {
-  await set(ref(database, "catalog"), catalog);
-  return catalog;
+  if (!auth.currentUser) {
+    throw new Error("Sua sessão expirou. Entre novamente para salvar.");
+  }
+
+  const cleanCatalog = JSON.parse(
+    JSON.stringify(catalog, (_key, value) =>
+      value === undefined ? null : value,
+    ),
+  );
+
+  try {
+    await set(ref(database, "catalog"), cleanCatalog);
+    return cleanCatalog;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("PERMISSION_DENIED")) {
+      throw new Error(
+        "O Firebase recusou o salvamento. Verifique as regras do Realtime Database e faça login novamente.",
+      );
+    }
+    throw new Error(
+      "Não foi possível salvar agora. Verifique sua conexão e tente novamente.",
+    );
+  }
 }
 
 export function watchCatalog(callback: (catalog: unknown) => void) {
