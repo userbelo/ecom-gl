@@ -109,19 +109,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .field textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
 .field input[type="file"] { padding: 8px; }
 .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--deep-pink); outline: 2px solid #fce0ec; }
-.rich-editor { border: 1px solid #e8d9e1; background: #fff; }
-.rich-editor:focus-within { border-color: var(--deep-pink); outline: 2px solid #fce0ec; }
-.rich-editor__preview { min-height: 100px; padding: 12px; color: var(--ink); font-size: 12px; line-height: 1.6; }
-.rich-editor__preview:empty::before { content: "Nenhuma descrição cadastrada."; color: #a58d9a; }
-.rich-editor__preview h2, .rich-editor__preview h3, .rich-editor__preview p, .rich-editor__preview ul, .rich-editor__preview ol { margin: 0 0 10px; }
-.rich-editor__edit { margin: 0 7px 7px; padding: 8px 12px; border: 1px solid #e8d9e1; color: var(--deep-pink); background: #fffafd; cursor: pointer; font: inherit; font-size: 10px; font-weight: 700; }
-.rich-editor__edit:hover { border-color: var(--deep-pink); }
-.rich-editor__toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 7px; border-bottom: 1px solid #eee1e7; background: #fffafd; }
-.rich-editor__button { min-width: 32px; min-height: 28px; padding: 0 8px; border: 1px solid #e8d9e1; color: var(--ink); background: #fff; cursor: pointer; font: inherit; font-size: 10px; }
-.rich-editor__button:hover { border-color: var(--deep-pink); color: var(--deep-pink); }
-.rich-editor__content { min-height: 190px; padding: 12px; color: var(--ink); font-size: 12px; line-height: 1.6; outline: 0; }
-.rich-editor__content:empty::before { content: attr(data-placeholder); color: #a58d9a; pointer-events: none; }
-.rich-editor__content h2, .rich-editor__content h3, .rich-editor__content p, .rich-editor__content ul, .rich-editor__content ol { margin: 0 0 10px; }
 .field small { color: var(--muted); font-size: 9px; font-weight: 400; line-height: 1.5; }
 .editor-subheading { margin: 32px 0 15px; }
 .editor-subheading h3 { font-size: 22px; }

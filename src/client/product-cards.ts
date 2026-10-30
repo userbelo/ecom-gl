@@ -160,78 +160,14 @@ function createPriceDisplay(product, className) {
   return display;
 }
 
-function sanitizeDescriptionMarkup(markup) {
+function getDescriptionText(description) {
   const template = document.createElement("template");
-  template.innerHTML = markup || "";
-  const allowedTags = new Set([
-    "H2",
-    "H3",
-    "P",
-    "STRONG",
-    "EM",
-    "UL",
-    "OL",
-    "LI",
-    "BR",
-    "A",
-  ]);
-  const cleanNode = (node) => {
-    Array.from(node.childNodes).forEach((child) => {
-      if (child.nodeType !== Node.ELEMENT_NODE) return;
-      const element = child;
-      if (!allowedTags.has(element.tagName)) {
-        if (element.tagName === "SCRIPT" || element.tagName === "STYLE") {
-          child.remove();
-          return;
-        }
-        const text = document.createTextNode(element.textContent || "");
-        element.replaceWith(text);
-        return;
-      }
-      Array.from(element.attributes).forEach((attribute) => {
-        if (
-          element.tagName !== "A" ||
-          !["href", "target", "rel"].includes(attribute.name)
-        ) {
-          element.removeAttribute(attribute.name);
-        }
-      });
-      if (element.tagName === "A") {
-        const href = element.getAttribute("href") || "";
-        if (!/^(https?:|mailto:)/i.test(href)) {
-          element.replaceWith(document.createTextNode(element.textContent || ""));
-          return;
-        }
-        element.target = "_blank";
-        element.rel = "noopener noreferrer";
-      }
-      cleanNode(element);
-    });
-  };
-  cleanNode(template.content);
-  return template.innerHTML;
-}
-
-function getDescriptionMarkup(description) {
-  const value = String(description || "").trim();
-  if (!value) return "<p>Descrição do produto em breve.</p>";
-  const hasMarkup = /<\s*[a-z][^>]*>/i.test(value);
-  const markup = hasMarkup
-    ? value
-    : `<p>${value.replace(/[&<>"']/g, (character) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[character])}</p>`;
-  return sanitizeDescriptionMarkup(markup);
+  template.innerHTML = String(description || "");
+  return (template.content.textContent || "").replace(/\s+/g, " ").trim();
 }
 
 function getDescriptionSummary(description, maxLength = 120) {
-  const template = document.createElement("template");
-  template.innerHTML = getDescriptionMarkup(description);
-  const text = (template.content.textContent || "").replace(/\s+/g, " ").trim();
+  const text = getDescriptionText(description);
   return text.length > maxLength
     ? `${text.slice(0, maxLength).replace(/\s+\S*$/, "")}…`
     : text;
@@ -1116,7 +1052,8 @@ function renderProductDetails(productId, preferredVariant = 0) {
     "Descrição do produto",
   );
   const description = createElement("div", "product-detail__description");
-  description.innerHTML = getDescriptionMarkup(product.description);
+  description.textContent =
+    getDescriptionText(product.description) || "Descrição do produto em breve.";
   descriptionPanel.append(descriptionHeading, description);
   const variantsHeading = createElement(
     "h2",

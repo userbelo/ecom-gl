@@ -38,56 +38,6 @@ let toastTimeout;
 let confirmResolve;
 let persistQueue = Promise.resolve();
 
-function sanitizeDescriptionMarkup(markup) {
-  const template = document.createElement("template");
-  template.innerHTML = markup || "";
-  const allowedTags = new Set(["H2", "H3", "P", "STRONG", "EM", "UL", "OL", "LI", "BR"]);
-  const cleanNode = (node) => {
-    Array.from(node.children).forEach((child) => {
-      if (!allowedTags.has(child.tagName)) {
-        if (child.tagName === "SCRIPT" || child.tagName === "STYLE") {
-          child.remove();
-        } else {
-          child.replaceWith(document.createTextNode(child.textContent || ""));
-        }
-        return;
-      }
-      Array.from(child.attributes).forEach((attribute) => {
-        child.removeAttribute(attribute.name);
-      });
-      cleanNode(child);
-    });
-  };
-  cleanNode(template.content);
-  return template.innerHTML.trim();
-}
-
-function setupDescriptionEditor() {
-  const editor = document.querySelector("#product-description");
-  if (!editor) return;
-  const editorPanel = document.querySelector("#product-description-editing");
-  const preview = document.querySelector("#product-description-preview");
-  const editButton = document.querySelector("#product-description-edit");
-  editButton.addEventListener("click", () => {
-    const isEditing = !editorPanel.hidden;
-    editorPanel.hidden = isEditing;
-    preview.hidden = !isEditing;
-    editButton.textContent = isEditing ? "Editar descrição" : "Fechar edição";
-    if (!isEditing) editor.focus();
-  });
-  document.querySelectorAll("[data-description-format]").forEach((button) => {
-    button.addEventListener("mousedown", (event) => event.preventDefault());
-    button.addEventListener("click", () => {
-      editor.focus();
-      document.execCommand(
-        button.dataset.descriptionFormat,
-        false,
-        button.dataset.descriptionValue || null,
-      );
-    });
-  });
-}
-
 function getCategoryKind(category) {
   return category.kind || (category.desktopImage || category.mobileImage ? "banner" : "filter");
 }
@@ -111,7 +61,6 @@ editorStepButtons.forEach((button) => {
 document.querySelectorAll("[data-step-next]").forEach((button) => {
   button.addEventListener("click", () => setEditorStep(button.dataset.stepNext));
 });
-setupDescriptionEditor();
 
 function createDefaultSizeChart() {
   return [
@@ -334,14 +283,8 @@ function renderProductEditor() {
     product.reviewRating ?? 4.5;
   document.querySelector("#product-review-count").value =
     product.reviewCount ?? 0;
-  document.querySelector("#product-description").innerHTML =
-    sanitizeDescriptionMarkup(product.description);
-  document.querySelector("#product-description-preview").innerHTML =
-    sanitizeDescriptionMarkup(product.description);
-  document.querySelector("#product-description-preview").hidden = false;
-  document.querySelector("#product-description-editing").hidden = true;
-  document.querySelector("#product-description-edit").textContent =
-    "Editar descrição";
+  document.querySelector("#product-description").value =
+    product.description || "";
   document.querySelector("#product-visibility").value =
     product.catalogOnly ? "category" : "store";
   const comboSelect = document.querySelector("#product-combo-category");
@@ -933,9 +876,9 @@ productForm.addEventListener("submit", async (event) => {
     }
     product.reviewRating = reviewRating;
     product.reviewCount = reviewCount;
-    product.description = sanitizeDescriptionMarkup(
-      document.querySelector("#product-description").innerHTML,
-    );
+    product.description = document
+      .querySelector("#product-description")
+      .value.trim();
     if (!product.description) {
       throw new Error("Informe uma descrição para o produto.");
     }
