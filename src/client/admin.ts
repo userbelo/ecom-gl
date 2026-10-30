@@ -38,6 +38,46 @@ let toastTimeout;
 let confirmResolve;
 let persistQueue = Promise.resolve();
 
+function sanitizeDescriptionMarkup(markup) {
+  const template = document.createElement("template");
+  template.innerHTML = markup || "";
+  const allowedTags = new Set(["H2", "H3", "P", "STRONG", "EM", "UL", "OL", "LI", "BR"]);
+  const cleanNode = (node) => {
+    Array.from(node.children).forEach((child) => {
+      if (!allowedTags.has(child.tagName)) {
+        if (child.tagName === "SCRIPT" || child.tagName === "STYLE") {
+          child.remove();
+        } else {
+          child.replaceWith(document.createTextNode(child.textContent || ""));
+        }
+        return;
+      }
+      Array.from(child.attributes).forEach((attribute) => {
+        child.removeAttribute(attribute.name);
+      });
+      cleanNode(child);
+    });
+  };
+  cleanNode(template.content);
+  return template.innerHTML.trim();
+}
+
+function setupDescriptionEditor() {
+  const editor = document.querySelector("#product-description");
+  if (!editor) return;
+  document.querySelectorAll("[data-description-format]").forEach((button) => {
+    button.addEventListener("mousedown", (event) => event.preventDefault());
+    button.addEventListener("click", () => {
+      editor.focus();
+      document.execCommand(
+        button.dataset.descriptionFormat,
+        false,
+        button.dataset.descriptionValue || null,
+      );
+    });
+  });
+}
+
 function getCategoryKind(category) {
   return category.kind || (category.desktopImage || category.mobileImage ? "banner" : "filter");
 }
@@ -61,6 +101,7 @@ editorStepButtons.forEach((button) => {
 document.querySelectorAll("[data-step-next]").forEach((button) => {
   button.addEventListener("click", () => setEditorStep(button.dataset.stepNext));
 });
+setupDescriptionEditor();
 
 function createDefaultSizeChart() {
   return [
@@ -279,7 +320,12 @@ function renderProductEditor() {
     product.promotionalPriceCents == null
       ? ""
       : (product.promotionalPriceCents / 100).toFixed(2).replace(".", ",");
-  document.querySelector("#product-description").value = product.description;
+  document.querySelector("#product-review-rating").value =
+    product.reviewRating ?? 4.5;
+  document.querySelector("#product-review-count").value =
+    product.reviewCount ?? 0;
+  document.querySelector("#product-description").innerHTML =
+    sanitizeDescriptionMarkup(product.description);
   document.querySelector("#product-visibility").value =
     product.catalogOnly ? "category" : "store";
   const comboSelect = document.querySelector("#product-combo-category");
@@ -722,6 +768,8 @@ document.querySelector("#new-product").addEventListener("click", () => {
     comboCategoryId: null,
     priceCents: 0,
     promotionalPriceCents: null,
+    reviewRating: 4.5,
+    reviewCount: 0,
     categoryId: catalog.categories[0].id,
     checkoutUrl: "",
     supplierUrl: "",
@@ -850,9 +898,31 @@ productForm.addEventListener("submit", async (event) => {
         "O preço promocional precisa ser maior que zero e menor que o preço de venda.",
       );
     }
-    product.description = document
-      .querySelector("#product-description")
-      .value.trim();
+    const reviewRating = Number(
+      document.querySelector("#product-review-rating").value,
+    );
+    const reviewCount = Number(
+      document.querySelector("#product-review-count").value,
+    );
+    if (
+      !Number.isFinite(reviewRating) ||
+      reviewRating < 0.5 ||
+      reviewRating > 4.5 ||
+      Math.round(reviewRating * 2) !== reviewRating * 2
+    ) {
+      throw new Error("A nota precisa estar entre 0,5 e 4,5 em passos de 0,5.");
+    }
+    if (!Number.isSafeInteger(reviewCount) || reviewCount < 0) {
+      throw new Error("A quantidade de avaliações precisa ser um número inteiro.");
+    }
+    product.reviewRating = reviewRating;
+    product.reviewCount = reviewCount;
+    product.description = sanitizeDescriptionMarkup(
+      document.querySelector("#product-description").innerHTML,
+    );
+    if (!product.description) {
+      throw new Error("Informe uma descrição para o produto.");
+    }
     product.catalogOnly =
       document.querySelector("#product-visibility").value === "category";
     product.comboCategoryId =

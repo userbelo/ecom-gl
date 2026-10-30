@@ -109,6 +109,12 @@ let comboCarouselTimer;
 function normalizeProduct(product) {
   return {
     ...product,
+    reviewRating:
+      Number.isFinite(product.reviewRating) ? product.reviewRating : 4.5,
+    reviewCount:
+      Number.isSafeInteger(product.reviewCount) && product.reviewCount >= 0
+        ? product.reviewCount
+        : 0,
     variants: product.variants.map((variant) => ({
       ...variant,
       first: variant.images[0],
@@ -152,6 +158,83 @@ function createPriceDisplay(product, className) {
     ),
   );
   return display;
+}
+
+function sanitizeDescriptionMarkup(markup) {
+  const template = document.createElement("template");
+  template.innerHTML = markup || "";
+  const allowedTags = new Set([
+    "H2",
+    "H3",
+    "P",
+    "STRONG",
+    "EM",
+    "UL",
+    "OL",
+    "LI",
+    "BR",
+    "A",
+  ]);
+  const cleanNode = (node) => {
+    Array.from(node.childNodes).forEach((child) => {
+      if (child.nodeType !== Node.ELEMENT_NODE) return;
+      const element = child;
+      if (!allowedTags.has(element.tagName)) {
+        if (element.tagName === "SCRIPT" || element.tagName === "STYLE") {
+          child.remove();
+          return;
+        }
+        const text = document.createTextNode(element.textContent || "");
+        element.replaceWith(text);
+        return;
+      }
+      Array.from(element.attributes).forEach((attribute) => {
+        if (
+          element.tagName !== "A" ||
+          !["href", "target", "rel"].includes(attribute.name)
+        ) {
+          element.removeAttribute(attribute.name);
+        }
+      });
+      if (element.tagName === "A") {
+        const href = element.getAttribute("href") || "";
+        if (!/^(https?:|mailto:)/i.test(href)) {
+          element.replaceWith(document.createTextNode(element.textContent || ""));
+          return;
+        }
+        element.target = "_blank";
+        element.rel = "noopener noreferrer";
+      }
+      cleanNode(element);
+    });
+  };
+  cleanNode(template.content);
+  return template.innerHTML;
+}
+
+function getDescriptionMarkup(description) {
+  const value = String(description || "").trim();
+  if (!value) return "<p>Descrição do produto em breve.</p>";
+  const hasMarkup = /<\s*[a-z][^>]*>/i.test(value);
+  const markup = hasMarkup
+    ? value
+    : `<p>${value.replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[character])}</p>`;
+  return sanitizeDescriptionMarkup(markup);
+}
+
+function getDescriptionSummary(description, maxLength = 120) {
+  const template = document.createElement("template");
+  template.innerHTML = getDescriptionMarkup(description);
+  const text = (template.content.textContent || "").replace(/\s+/g, " ").trim();
+  return text.length > maxLength
+    ? `${text.slice(0, maxLength).replace(/\s+\S*$/, "")}…`
+    : text;
 }
 
 function createPurchaseAction(
@@ -635,7 +718,7 @@ function createProductCard(product, productIndex) {
   const description = createElement(
     "p",
     "product-card__description",
-    product.description,
+    getDescriptionSummary(product.description),
   );
   card.append(media, details, description, purchaseRow, swatches);
   return card;
@@ -918,14 +1001,80 @@ function renderProductDetails(productId, preferredVariant = 0) {
   const layout = createElement("div", "product-detail__layout");
   const gallery = createElement("div", "product-detail__gallery");
   const mainImageFrame = createElement("div", "product-detail__main-image");
-  const mainImage = document.createElement("img");
-  mainImage.alt = `${product.name}, imagem 1`;
-  mainImage.decoding = "async";
-  mainImageFrame.append(mainImage);
+  const imageTrack = createElement("div", "product-detail__image-track");
+  imageTrack.setAttribute("aria-label", "Galeria de imagens do produto");
+  const previousImage = createElement(
+    "button",
+    "product-detail__arrow product-detail__arrow--previous",
+    "‹",
+  );
+  previousImage.type = "button";
+  previousImage.setAttribute("aria-label", "Imagem anterior");
+  const nextImage = createElement(
+    "button",
+    "product-detail__arrow product-detail__arrow--next",
+    "›",
+  );
+  nextImage.type = "button";
+  nextImage.setAttribute("aria-label", "Próxima imagem");
+  mainImageFrame.append(imageTrack, previousImage, nextImage);
 
-  const thumbnails = createElement("div", "product-detail__thumbnails");
-  thumbnails.setAttribute("role", "group");
-  thumbnails.setAttribute("aria-label", "Imagens do produto");
+  const imageViewer = document.createElement("dialog");
+  imageViewer.className = "product-image-viewer";
+  imageViewer.setAttribute("aria-label", `Visualização ampliada de ${product.name}`);
+  const viewerTrack = createElement("div", "product-image-viewer__track");
+  viewerTrack.setAttribute("aria-label", "Imagens ampliadas do produto");
+  const viewerClose = createElement(
+    "button",
+    "product-image-viewer__close",
+    "×",
+  );
+  viewerClose.type = "button";
+  viewerClose.setAttribute("aria-label", "Fechar visualização da imagem");
+  const viewerPrevious = createElement(
+    "button",
+    "product-image-viewer__arrow product-image-viewer__arrow--previous",
+    "‹",
+  );
+  viewerPrevious.type = "button";
+  viewerPrevious.setAttribute("aria-label", "Imagem ampliada anterior");
+  const viewerNext = createElement(
+    "button",
+    "product-image-viewer__arrow product-image-viewer__arrow--next",
+    "›",
+  );
+  viewerNext.type = "button";
+  viewerNext.setAttribute("aria-label", "Próxima imagem ampliada");
+  const viewerFooter = createElement("div", "product-image-viewer__footer");
+  const viewerCounter = createElement("span", "product-image-viewer__counter");
+  const viewerHint = createElement(
+    "span",
+    "product-image-viewer__hint",
+    "Arraste para ver mais fotos",
+  );
+  const reviewCountLabel = new Intl.NumberFormat("pt-BR").format(
+    product.reviewCount ?? 0,
+  );
+  const viewerTrust = createElement(
+    "p",
+    "product-image-viewer__trust",
+    product.reviewCount > 0
+      ? `♡ ${reviewCountLabel} pessoas já avaliaram este produto — quem comprou, aprovou.`
+      : "♡ Seja uma das primeiras pessoas a avaliar este produto.",
+  );
+  viewerFooter.append(viewerCounter, viewerHint);
+  imageViewer.append(
+    viewerClose,
+    viewerTrack,
+    viewerPrevious,
+    viewerNext,
+    viewerFooter,
+    viewerTrust,
+  );
+  imageViewer.addEventListener("click", (event) => {
+    if (event.target === imageViewer) imageViewer.close();
+  });
+  viewerClose.addEventListener("click", () => imageViewer.close());
 
   const info = createElement("div", "product-detail__info");
   const eyebrow = createElement(
@@ -936,12 +1085,39 @@ function renderProductDetails(productId, preferredVariant = 0) {
   const title = createElement("h1", "product-detail__title", product.name);
   title.id = "product-detail-title";
   title.tabIndex = -1;
-  const price = createPriceDisplay(product, "product-detail__price");
-  const description = createElement(
-    "p",
-    "product-detail__description",
-    product.description,
+  const ratingValue = Math.min(4.5, Math.max(0.5, product.reviewRating ?? 4.5));
+  const ratingCount = product.reviewCount ?? 0;
+  const rating = createElement("div", "product-detail__rating");
+  rating.setAttribute(
+    "aria-label",
+    `Avaliação média ${ratingValue.toFixed(1).replace(".", ",")} de 5, baseada em ${ratingCount} avaliações`,
   );
+  const stars = createElement("span", "product-detail__rating-stars");
+  stars.setAttribute("aria-hidden", "true");
+  for (let index = 0; index < 5; index += 1) {
+    const star = createElement("span", "product-detail__rating-star", "★");
+    const difference = ratingValue - index;
+    star.classList.add(
+      difference >= 1 ? "is-full" : difference > 0 ? "is-half" : "is-empty",
+    );
+    stars.append(star);
+  }
+  const ratingText = createElement(
+    "span",
+    "product-detail__rating-text",
+    `${ratingValue.toFixed(1).replace(".", ",")} · ${ratingCount} avaliações`,
+  );
+  rating.append(stars, ratingText);
+  const price = createPriceDisplay(product, "product-detail__price");
+  const descriptionPanel = createElement("section", "product-detail__description-panel");
+  const descriptionHeading = createElement(
+    "h2",
+    "product-detail__description-heading",
+    "Descrição do produto",
+  );
+  const description = createElement("div", "product-detail__description");
+  description.innerHTML = getDescriptionMarkup(product.description);
+  descriptionPanel.append(descriptionHeading, description);
   const variantsHeading = createElement(
     "h2",
     "product-detail__section-title",
@@ -954,35 +1130,75 @@ function renderProductDetails(productId, preferredVariant = 0) {
   const renderGallery = () => {
     const images = currentVariant().images;
     currentImageIndex = Math.min(currentImageIndex, images.length - 1);
-    mainImage.src = images[currentImageIndex];
-    mainImage.alt = `${product.name}, imagem ${currentImageIndex + 1}, ${currentVariant().label}`;
-    thumbnails.replaceChildren(
+    imageTrack.replaceChildren(
       ...images.map((src, index) => {
-        const thumbnail = document.createElement("button");
-        thumbnail.className = "product-detail__thumbnail";
-        thumbnail.type = "button";
-        thumbnail.setAttribute(
-          "aria-label",
-          `Mostrar imagem ${index + 1} de ${product.name}`,
-        );
-        thumbnail.setAttribute(
-          "aria-pressed",
-          String(index === currentImageIndex),
-        );
         const image = document.createElement("img");
         image.src = src;
-        image.alt = "";
-        image.loading = "lazy";
+        image.alt = `${product.name}, imagem ${index + 1}, ${currentVariant().label}`;
+        image.loading = index === 0 ? "eager" : "lazy";
         image.decoding = "async";
-        thumbnail.append(image);
-        thumbnail.addEventListener("click", () => {
+        image.addEventListener("click", () => {
           currentImageIndex = index;
-          renderGallery();
+          renderViewerGallery();
+          imageViewer.showModal();
         });
-        return thumbnail;
+        return image;
       }),
     );
+    imageTrack.scrollLeft = imageTrack.clientWidth * currentImageIndex;
   };
+
+  const renderViewerGallery = () => {
+    const images = currentVariant().images;
+    viewerTrack.replaceChildren(
+      ...images.map((src, index) => {
+        const image = document.createElement("img");
+        image.className = "product-image-viewer__image";
+        image.src = src;
+        image.alt = `${product.name}, imagem ${index + 1}, ${currentVariant().label}, visualização ampliada`;
+        image.loading = index === currentImageIndex ? "eager" : "lazy";
+        image.decoding = "async";
+        return image;
+      }),
+    );
+    viewerTrack.scrollLeft = viewerTrack.clientWidth * currentImageIndex;
+    viewerCounter.textContent = `${currentImageIndex + 1} / ${images.length}`;
+  };
+
+  const moveToImage = (index) => {
+    const images = currentVariant().images;
+    currentImageIndex = (index + images.length) % images.length;
+    imageTrack.scrollTo({
+      left: imageTrack.clientWidth * currentImageIndex,
+      behavior: "smooth",
+    });
+  };
+
+  imageTrack.addEventListener("scroll", () => {
+    if (!imageTrack.clientWidth) return;
+    currentImageIndex = Math.min(
+      Math.round(imageTrack.scrollLeft / imageTrack.clientWidth),
+      currentVariant().images.length - 1,
+    );
+  });
+  previousImage.addEventListener("click", () => moveToImage(currentImageIndex - 1));
+  nextImage.addEventListener("click", () => moveToImage(currentImageIndex + 1));
+  viewerPrevious.addEventListener("click", () => {
+    moveToImage(currentImageIndex - 1);
+    renderViewerGallery();
+  });
+  viewerNext.addEventListener("click", () => {
+    moveToImage(currentImageIndex + 1);
+    renderViewerGallery();
+  });
+  viewerTrack.addEventListener("scroll", () => {
+    if (!viewerTrack.clientWidth) return;
+    currentImageIndex = Math.min(
+      Math.round(viewerTrack.scrollLeft / viewerTrack.clientWidth),
+      currentVariant().images.length - 1,
+    );
+    viewerCounter.textContent = `${currentImageIndex + 1} / ${currentVariant().images.length}`;
+  });
 
   product.variants.forEach((variant, index) => {
     const choice = createElement("button", "product-detail__variant");
@@ -1117,10 +1333,11 @@ function renderProductDetails(productId, preferredVariant = 0) {
   );
 
   renderGallery();
-  gallery.append(mainImageFrame, thumbnails);
+  gallery.append(mainImageFrame);
   info.append(
     eyebrow,
     title,
+    rating,
     price,
     description,
     variantsHeading,
@@ -1129,8 +1346,8 @@ function renderProductDetails(productId, preferredVariant = 0) {
   if (sizeSelector) info.append(sizeSelector);
   info.append(addToCartButton);
   info.append(purchaseButton);
-  layout.append(gallery, info);
-  content.append(breadcrumbs, backButton, layout);
+  layout.append(gallery, info, descriptionPanel);
+  content.append(breadcrumbs, backButton, layout, imageViewer);
   root.replaceChildren(content);
   root.hidden = false;
   root.dataset.productId = product.id;

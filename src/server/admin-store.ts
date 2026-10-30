@@ -125,6 +125,10 @@ function validateCatalog(catalog) {
 
   const productIds = new Set();
   for (const product of catalog.products) {
+    if (product && typeof product === "object" && !Array.isArray(product)) {
+      if (product.reviewRating === undefined) product.reviewRating = 4.5;
+      if (product.reviewCount === undefined) product.reviewCount = 0;
+    }
     if (
       !product ||
       typeof product.id !== "string" ||
@@ -142,6 +146,15 @@ function validateCatalog(catalog) {
         typeof product.comboCategoryId !== "string") ||
       !Number.isSafeInteger(product.priceCents) ||
       product.priceCents < 0 ||
+      (typeof product.reviewRating !== "number" ||
+        !Number.isFinite(product.reviewRating) ||
+        product.reviewRating < 0.5 ||
+        product.reviewRating > 4.5 ||
+        Math.round(product.reviewRating * 2) !== product.reviewRating * 2) ||
+      (typeof product.reviewCount !== "number" ||
+        !Number.isSafeInteger(product.reviewCount) ||
+        product.reviewCount < 0 ||
+        product.reviewCount > 1000000) ||
       !(
         product.promotionalPriceCents === undefined ||
         product.promotionalPriceCents === null ||
