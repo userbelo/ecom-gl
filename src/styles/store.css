@@ -1455,8 +1455,11 @@ a:focus-visible {
   gap: clamp(36px, 7vw, 96px);
 }
 
+.product-detail__left-column {
+  min-width: 0;
+}
+
 .product-detail__description-panel {
-  grid-column: 1 / -1;
   margin-top: 22px;
   padding: 28px 0 8px;
   border-top: 1px solid #efdbe4;
@@ -2153,12 +2156,25 @@ a:focus-visible {
   }
 
   .product-detail__layout {
-    grid-template-columns: minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 32px;
   }
 
+  .product-detail__left-column {
+    display: contents;
+  }
+
+  .product-detail__gallery {
+    order: 1;
+  }
+
+  .product-detail__info {
+    order: 2;
+  }
+
   .product-detail__description-panel {
-    grid-column: 1;
+    order: 3;
     margin-top: 0;
   }
 
