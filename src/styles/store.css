@@ -1456,7 +1456,7 @@ a:focus-visible {
 }
 
 .product-detail__description-panel {
-  grid-column: 1;
+  grid-column: 1 / -1;
   margin-top: 8px;
   padding: 28px 0 8px;
   border-top: 1px solid #efdbe4;
@@ -2157,7 +2157,7 @@ a:focus-visible {
   }
 
   .product-detail__description-panel {
-    grid-column: auto;
+    grid-column: 1;
     margin-top: 0;
   }
 
