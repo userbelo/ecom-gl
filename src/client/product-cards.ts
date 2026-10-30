@@ -1339,7 +1339,6 @@ function renderProductDetails(productId, preferredVariant = 0) {
     title,
     rating,
     price,
-    description,
     variantsHeading,
     variants,
   );
