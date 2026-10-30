@@ -109,6 +109,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .field textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
 .field input[type="file"] { padding: 8px; }
 .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--deep-pink); outline: 2px solid #fce0ec; }
+.product-recommendations { display: grid; gap: 8px; margin-top: 6px; }
+.product-recommendation-option { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid #eee1e7; color: var(--ink); background: #fffafd; cursor: pointer; font-size: 11px; }
+.product-recommendation-option input { width: auto; min-height: auto; accent-color: var(--deep-pink); }
+.product-recommendations__empty { color: var(--muted); }
 .field small { color: var(--muted); font-size: 9px; font-weight: 400; line-height: 1.5; }
 .editor-subheading { margin: 32px 0 15px; }
 .editor-subheading h3 { font-size: 22px; }

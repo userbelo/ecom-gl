@@ -173,6 +173,28 @@ function getDescriptionSummary(description, maxLength = 120) {
     : text;
 }
 
+function createRecommendations(product) {
+  const recommendations = products.filter(
+    (candidate) =>
+      candidate.id !== product.id &&
+      candidate.categoryId === product.categoryId &&
+      product.recommendedProductIds?.includes(candidate.id),
+  );
+  if (!recommendations.length) return null;
+  const section = createElement("section", "product-recommendations");
+  const heading = createElement(
+    "h2",
+    "product-recommendations__heading",
+    "Você também pode gostar",
+  );
+  const grid = createElement("div", "product-recommendations__grid");
+  recommendations.forEach((candidate, index) => {
+    grid.append(createProductCard(candidate, index));
+  });
+  section.append(heading, grid);
+  return section;
+}
+
 function createPurchaseAction(
   product,
   className,
@@ -1283,7 +1305,15 @@ function renderProductDetails(productId, preferredVariant = 0) {
   info.append(addToCartButton);
   info.append(purchaseButton);
   layout.append(gallery, info);
-  content.append(breadcrumbs, backButton, productHeader, layout, descriptionPanel, imageViewer);
+  content.append(
+    breadcrumbs,
+    backButton,
+    productHeader,
+    layout,
+    descriptionPanel,
+    createRecommendations(product),
+    imageViewer,
+  );
   root.replaceChildren(content);
   root.hidden = false;
   root.dataset.productId = product.id;

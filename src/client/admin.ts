@@ -46,6 +46,42 @@ function getComboCategories() {
   return catalog.categories.filter((category) => getCategoryKind(category) === "combo");
 }
 
+function renderProductRecommendations(product) {
+  const container = document.querySelector("#product-recommendations");
+  if (!container) return;
+  const categoryProducts = catalog.products.filter(
+    (candidate) =>
+      candidate.categoryId === product.categoryId && candidate.id !== product.id,
+  );
+  if (categoryProducts.length === 0) {
+    container.replaceChildren(
+      createElement(
+        "small",
+        "product-recommendations__empty",
+        "Não há outros produtos nesta categoria para recomendar.",
+      ),
+    );
+    return;
+  }
+  const selectedIds = new Set(product.recommendedProductIds ?? []);
+  container.replaceChildren(
+    ...categoryProducts.map((candidate) => {
+      const label = createElement("label", "product-recommendation-option");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = candidate.id;
+      checkbox.checked = selectedIds.has(candidate.id);
+      checkbox.addEventListener("change", () => {
+        product.recommendedProductIds = Array.from(
+          container.querySelectorAll("input:checked"),
+        ).map((input) => input.value);
+      });
+      label.append(checkbox, createElement("span", "", candidate.name));
+      return label;
+    }),
+  );
+}
+
 function setEditorStep(step) {
   editorStepButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.editorStep === step);
@@ -317,6 +353,12 @@ function renderProductEditor() {
       return option;
     }),
   );
+  renderProductRecommendations(product);
+  categorySelect.onchange = () => {
+    product.categoryId = categorySelect.value;
+    product.recommendedProductIds = [];
+    renderProductRecommendations(product);
+  };
   renderVariants(product);
 }
 
@@ -887,6 +929,18 @@ productForm.addEventListener("submit", async (event) => {
     product.comboCategoryId =
       document.querySelector("#product-combo-category").value || null;
     product.categoryId = categoryId;
+    product.recommendedProductIds = Array.from(
+      new Set(
+        (product.recommendedProductIds ?? []).filter((id) =>
+          catalog.products.some(
+            (candidate) =>
+              candidate.id === id &&
+              candidate.id !== product.id &&
+              candidate.categoryId === categoryId,
+          ),
+        ),
+      ),
+    );
     product.checkoutUrl = extractCheckoutUrl(checkoutInput);
     product.supplierUrl = supplierUrl;
     product.sizeChart = document.querySelector("#product-has-sizes").checked

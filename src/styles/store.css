@@ -1824,6 +1824,32 @@ a:focus-visible {
   font-weight: 700;
 }
 
+.product-recommendations {
+  margin: 60px auto 0;
+  padding-top: 34px;
+  border-top: 1px solid #efdbe4;
+}
+
+.product-recommendations__heading {
+  margin: 0 0 24px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-align: center;
+}
+
+.product-recommendations__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.product-recommendations .product-card {
+  min-width: 0;
+}
+
 .product-detail__section-title {
   margin-bottom: 15px;
   color: var(--ink);
@@ -2181,6 +2207,16 @@ a:focus-visible {
     width: 100%;
     margin-top: 0;
     padding-top: 24px;
+  }
+
+  .product-recommendations {
+    margin-top: 40px;
+    padding-top: 24px;
+  }
+
+  .product-recommendations__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .product-detail__gallery {

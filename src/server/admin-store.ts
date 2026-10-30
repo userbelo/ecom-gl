@@ -144,6 +144,12 @@ function validateCatalog(catalog) {
       (product.comboCategoryId !== undefined &&
         product.comboCategoryId !== null &&
         typeof product.comboCategoryId !== "string") ||
+      (product.recommendedProductIds !== undefined &&
+        (!Array.isArray(product.recommendedProductIds) ||
+          product.recommendedProductIds.length > 50 ||
+          product.recommendedProductIds.some(
+            (id) => typeof id !== "string" || !/^[a-z0-9-]{1,80}$/.test(id),
+          ))) ||
       !Number.isSafeInteger(product.priceCents) ||
       product.priceCents < 0 ||
       (typeof product.reviewRating !== "number" ||
@@ -269,6 +275,26 @@ function validateCatalog(catalog) {
         throw httpError(400, `Há uma opção inválida em "${product.name}".`);
       }
       variantIds.add(variant.id);
+    }
+  }
+
+  for (const product of catalog.products) {
+    const recommendations = product.recommendedProductIds ?? [];
+    if (
+      recommendations.some(
+        (recommendedId) =>
+          recommendedId === product.id ||
+          !catalog.products.some(
+            (candidate) =>
+              candidate.id === recommendedId &&
+              candidate.categoryId === product.categoryId,
+          ),
+      )
+    ) {
+      throw httpError(
+        400,
+        `As recomendações do produto "${product.name}" precisam pertencer à mesma categoria.`,
+      );
     }
   }
 
