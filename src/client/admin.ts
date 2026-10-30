@@ -42,6 +42,10 @@ function getCategoryKind(category) {
   return category.kind || (category.desktopImage || category.mobileImage ? "banner" : "filter");
 }
 
+function getComboCategories() {
+  return catalog.categories.filter((category) => getCategoryKind(category) === "combo");
+}
+
 function setEditorStep(step) {
   editorStepButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.editorStep === step);
@@ -278,6 +282,18 @@ function renderProductEditor() {
   document.querySelector("#product-description").value = product.description;
   document.querySelector("#product-visibility").value =
     product.catalogOnly ? "category" : "store";
+  const comboSelect = document.querySelector("#product-combo-category");
+  comboSelect.replaceChildren(
+    createElement("option", "", "Não participar"),
+    ...getComboCategories().map((category) => {
+      const option = document.createElement("option");
+      option.value = category.id;
+      option.textContent = category.name;
+      option.selected = category.id === product.comboCategoryId;
+      return option;
+    }),
+  );
+  comboSelect.value = product.comboCategoryId ?? "";
   document.querySelector("#product-checkout").value = product.checkoutUrl;
   document.querySelector("#product-supplier-url").value =
     product.supplierUrl ?? "";
@@ -424,10 +440,17 @@ function renderCategories() {
     const usageCount = catalog.products.filter(
       (product) => product.categoryId === category.id,
     ).length;
+    const comboUsageCount = catalog.products.filter(
+      (product) => product.comboCategoryId === category.id,
+    ).length;
     const usage = createElement(
       "small",
       "",
-      `${usageCount} ${usageCount === 1 ? "produto" : "produtos"}`,
+      `${usageCount} ${usageCount === 1 ? "produto" : "produtos"}${
+        comboUsageCount
+          ? ` · ${comboUsageCount} no carrossel`
+          : ""
+      }`,
     );
     heading.append(name, usage);
     const actions = createElement("div", "category-row__actions");
@@ -465,14 +488,14 @@ function renderCategories() {
     const typeSelect = document.createElement("select");
     typeSelect.setAttribute("aria-label", `Tipo da categoria ${category.name}`);
     typeSelect.innerHTML =
-      '<option value="filter">Filtro ao lado de "Todos"</option><option value="banner">Banner em carrossel</option>';
+      '<option value="filter">Filtro ao lado de "Todos"</option><option value="banner">Banner em carrossel</option><option value="combo">Kits/combos em carrossel</option>';
     typeSelect.value = getCategoryKind(category);
     typeSelect.className = "category-row__type";
     fields.prepend(typeSelect);
     const syncTypeFields = () => {
-      const isBanner = typeSelect.value === "banner";
-      desktopImageField.hidden = !isBanner;
-      mobileImageField.hidden = !isBanner;
+      const needsImages = ["banner", "combo"].includes(typeSelect.value);
+      desktopImageField.hidden = !needsImages;
+      mobileImageField.hidden = !needsImages;
     };
     typeSelect.addEventListener("change", syncTypeFields);
     syncTypeFields();
@@ -501,14 +524,14 @@ function renderCategories() {
         setStatus("Informe um nome para a categoria.", true);
         return;
       }
-      const isBanner = typeSelect.value === "banner";
-      if (isBanner && (!desktopImage.value.trim() || !mobileImage.value.trim())) {
+      const needsImages = ["banner", "combo"].includes(typeSelect.value);
+      if (needsImages && (!desktopImage.value.trim() || !mobileImage.value.trim())) {
         setStatus("Informe as imagens desktop e mobile da categoria.", true);
         return;
       }
       category.name = nextName;
       category.kind = typeSelect.value;
-      if (isBanner) {
+      if (needsImages) {
         category.desktopImage = desktopImage.value.trim();
         category.mobileImage = mobileImage.value.trim();
       } else {
@@ -519,8 +542,9 @@ function renderCategories() {
     });
     const remove = createElement("button", "", "EXCLUIR");
     remove.type = "button";
-    remove.disabled = usageCount > 0 && transferTarget.options.length < 2;
-    remove.title = usageCount
+    const totalUsageCount = usageCount + comboUsageCount;
+    remove.disabled = totalUsageCount > 0 && transferTarget.options.length < 2;
+    remove.title = totalUsageCount
       ? "Escolha uma categoria de destino para transferir os produtos antes de excluir."
       : "Excluir categoria";
     remove.addEventListener("click", async () => {
@@ -532,8 +556,8 @@ function renderCategories() {
       }
       const confirmed = await askConfirmation(
         "Excluir categoria?",
-        usageCount > 0
-          ? `A categoria "${category.name}" será removida e seus ${usageCount} produtos serão transferidos.`
+        totalUsageCount > 0
+          ? `A categoria "${category.name}" será removida e seus vínculos serão transferidos ou removidos.`
           : `A categoria "${category.name}" será removida. Os produtos não serão excluídos.`,
         "Excluir categoria",
       );
@@ -541,6 +565,11 @@ function renderCategories() {
       if (usageCount > 0) {
         catalog.products.forEach((product) => {
           if (product.categoryId === category.id) product.categoryId = targetId;
+        });
+      }
+      if (comboUsageCount > 0) {
+        catalog.products.forEach((product) => {
+          if (product.comboCategoryId === category.id) delete product.comboCategoryId;
         });
       }
       catalog.categories = catalog.categories.filter(
@@ -653,6 +682,10 @@ function renderSettings() {
   document.querySelector("#setting-hero-description").value =
     settings.heroDescription;
   document.querySelector("#setting-hero-image").value = settings.heroImage;
+  document.querySelector("#setting-entry-screen-enabled").checked =
+    settings.entryScreenEnabled !== false;
+  document.querySelector("#setting-intro-animation-enabled").checked =
+    settings.introAnimationEnabled !== false;
   document.querySelector("#setting-promo-code").value = settings.promoCode;
   document.querySelector("#setting-promo-percent").value = settings.promoPercent;
 }
@@ -686,6 +719,7 @@ document.querySelector("#new-product").addEventListener("click", () => {
     name: "Novo produto",
     description: "",
     catalogOnly: false,
+    comboCategoryId: null,
     priceCents: 0,
     promotionalPriceCents: null,
     categoryId: catalog.categories[0].id,
@@ -821,6 +855,8 @@ productForm.addEventListener("submit", async (event) => {
       .value.trim();
     product.catalogOnly =
       document.querySelector("#product-visibility").value === "category";
+    product.comboCategoryId =
+      document.querySelector("#product-combo-category").value || null;
     product.categoryId = categoryId;
     product.checkoutUrl = extractCheckoutUrl(checkoutInput);
     product.supplierUrl = supplierUrl;
@@ -876,7 +912,7 @@ document.querySelector("#category-form").addEventListener("submit", async (event
     id = `${baseId}-${suffix++}`;
   }
   const category = { id, name, kind };
-  if (kind === "banner") {
+  if (["banner", "combo"].includes(kind)) {
     const desktopImage = createDesktopImage.value.trim();
     const mobileImage = createMobileImage.value.trim();
     if (!desktopImage || !mobileImage) {
@@ -894,7 +930,7 @@ document.querySelector("#category-form").addEventListener("submit", async (event
 });
 
 categoryType.addEventListener("change", () => {
-  createBannerFields.hidden = categoryType.value !== "banner";
+  createBannerFields.hidden = !["banner", "combo"].includes(categoryType.value);
 });
 
 document.querySelector("#settings-form").addEventListener("submit", async (event) => {
@@ -913,6 +949,12 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
     .querySelector("#setting-hero-description")
     .value.trim();
   settings.heroImage = document.querySelector("#setting-hero-image").value.trim();
+  settings.entryScreenEnabled = document.querySelector(
+    "#setting-entry-screen-enabled",
+  ).checked;
+  settings.introAnimationEnabled = document.querySelector(
+    "#setting-intro-animation-enabled",
+  ).checked;
   settings.promoCode = document.querySelector("#setting-promo-code").value.trim();
   settings.promoPercent = Number(
     document.querySelector("#setting-promo-percent").value,

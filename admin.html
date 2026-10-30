@@ -134,6 +134,11 @@
                   <small>Produtos “somente na categoria” não aparecem em “Todos” nem nos filtros da vitrine.</small>
                 </label>
                 <label class="field field--wide">
+                  <span>Carrossel de kits e combos</span>
+                  <select id="product-combo-category"></select>
+                  <small>Escolha “Não participar” ou uma categoria de kits/combos criada abaixo.</small>
+                </label>
+                <label class="field field--wide">
                   <span>Descrição</span>
                   <textarea id="product-description" name="description" rows="4" maxlength="3000"></textarea>
                 </label>
@@ -220,7 +225,7 @@
             <h2 id="categories-heading">Categorias</h2>
           </div>
         </div>
-        <p class="admin-help">Crie cada categoria em apenas um lugar: <strong>Filtro</strong> aparece ao lado de “Todos”; <strong>Banner</strong> aparece somente no carrossel de imagens abaixo dos produtos. O mesmo nome não pode ser usado nos dois tipos. A imagem já deve conter todo o texto.</p>
+        <p class="admin-help">Crie cada categoria em apenas um lugar: <strong>Filtro</strong> aparece ao lado de “Todos”; <strong>Banner</strong> aparece no carrossel de imagens; <strong>Kits/combos</strong> cria um carrossel especial abaixo dos banners. A imagem já deve conter todo o texto.</p>
         <div class="category-image-guide" aria-label="Tamanhos recomendados dos banners">
           <div>
             <strong>DESKTOP</strong>
@@ -243,6 +248,7 @@
             <select id="category-type">
               <option value="filter">Filtro ao lado de “Todos”</option>
               <option value="banner">Banner em carrossel</option>
+              <option value="combo">Kits/combos em carrossel</option>
             </select>
           </label>
           <div class="category-create__banner-fields" id="category-create-banner-fields" hidden>
@@ -301,6 +307,22 @@
               <span>Imagem da capa (URL HTTPS)</span>
               <input id="setting-hero-image" maxlength="2048" required />
               <small>Use uma URL HTTPS pública para a imagem da capa.</small>
+            </label>
+            <label class="field field--wide">
+              <span>Entrada da loja</span>
+              <span class="checkbox-field">
+                <input id="setting-entry-screen-enabled" type="checkbox" />
+                <span>Exibir a tela inicial do REHVA Club</span>
+              </span>
+              <small>Desative para abrir a vitrine diretamente, sem a tela inicial.</small>
+            </label>
+            <label class="field field--wide">
+              <span>Animação de entrada</span>
+              <span class="checkbox-field">
+                <input id="setting-intro-animation-enabled" type="checkbox" />
+                <span>Exibir o GIF animado ao entrar na loja</span>
+              </span>
+              <small>Desative para entrar diretamente na loja após a tela inicial.</small>
             </label>
             <label class="field">
               <span>Código promocional</span>

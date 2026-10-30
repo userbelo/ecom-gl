@@ -5,6 +5,8 @@ const INTRO_DURATION_MS = {
   desktop: 8000,
   mobile: 7940,
 };
+let storeTransitionPromise;
+
 export async function startIntro({ desktopGif, mobileGif }) {
   const welcome = document.querySelector("#welcome-root");
   const entryPreview = document.querySelector("#entry-preview");
@@ -45,6 +47,16 @@ export async function startIntro({ desktopGif, mobileGif }) {
 }
 
 export async function showStoreDirectly() {
+  if (storeTransitionPromise) return storeTransitionPromise;
+  storeTransitionPromise = showStoreDirectlyOnce();
+  try {
+    return await storeTransitionPromise;
+  } finally {
+    storeTransitionPromise = null;
+  }
+}
+
+async function showStoreDirectlyOnce() {
   const welcome = document.querySelector("#welcome-root");
   const entryPreview = document.querySelector("#entry-preview");
   const animationScreen = document.querySelector("#intro-animation");

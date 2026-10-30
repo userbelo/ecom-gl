@@ -104,6 +104,7 @@ let cartInitialized = false;
 const CART_STORAGE_KEY = "rehva-cart-v1";
 let activeCategoryId = "all";
 let categoryCarouselTimer;
+let comboCarouselTimer;
 
 function normalizeProduct(product) {
   return {
@@ -683,6 +684,7 @@ function renderCategoryBanners() {
     container.replaceChildren();
     return;
   }
+
   container.hidden = false;
   const track = createElement("div", "category-carousel__track");
   bannerCategories.forEach((category) => {
@@ -719,6 +721,74 @@ function renderCategoryBanners() {
   }
 }
 
+function renderComboShowcase() {
+  const container = document.querySelector("#combo-showcase");
+  if (!container) return;
+  const comboCategory = categories.find((category) => category.kind === "combo");
+  window.clearInterval(comboCarouselTimer);
+  if (!comboCategory) {
+    container.hidden = true;
+    container.replaceChildren();
+    return;
+  }
+  const comboProducts = products.filter(
+    (product) => product.comboCategoryId === comboCategory.id,
+  );
+  if (!comboProducts.length) {
+    container.hidden = true;
+    container.replaceChildren();
+    return;
+  }
+  container.hidden = false;
+  const picture = document.createElement("picture");
+  picture.className = "combo-showcase__background";
+  const mobileSource = document.createElement("source");
+  mobileSource.media = "(max-width: 760px)";
+  mobileSource.srcset = getCategoryImage(comboCategory, "mobileImage");
+  const background = document.createElement("img");
+  background.src = getCategoryImage(comboCategory, "desktopImage");
+  background.alt = "";
+  background.setAttribute("aria-hidden", "true");
+  picture.append(mobileSource, background);
+
+  const track = createElement("div", "combo-showcase__track");
+  track.setAttribute("role", "list");
+  const cards = comboProducts.map((product, index) => {
+    const card = createProductCard(product, index);
+    card.classList.add("combo-showcase__card");
+    track.append(card);
+    return card;
+  });
+  let currentIndex = 0;
+  const moveTo = (index) => {
+    currentIndex = (index + cards.length) % cards.length;
+    track.scrollTo({
+      left: cards[currentIndex].offsetLeft - track.offsetLeft,
+      behavior: "smooth",
+    });
+  };
+  const previous = createElement(
+    "button",
+    "combo-showcase__arrow combo-showcase__arrow--previous",
+    "‹",
+  );
+  previous.type = "button";
+  previous.setAttribute("aria-label", "Kit anterior");
+  previous.addEventListener("click", () => moveTo(currentIndex - 1));
+  const next = createElement(
+    "button",
+    "combo-showcase__arrow combo-showcase__arrow--next",
+    "›",
+  );
+  next.type = "button";
+  next.setAttribute("aria-label", "Próximo kit");
+  next.addEventListener("click", () => moveTo(currentIndex + 1));
+  container.replaceChildren(picture, track, previous, next);
+  if (cards.length > 1) {
+    comboCarouselTimer = window.setInterval(() => moveTo(currentIndex + 1), 5000);
+  }
+}
+
 function renderProductGrid() {
   const container = document.querySelector("#product-grid");
   if (!container) return;
@@ -749,7 +819,10 @@ function renderCategoryPage(categoryId) {
   const category = categories.find((entry) => entry.id === categoryId);
   if (!root || !category) return false;
   const categoryProducts = products.filter(
-    (product) => product.categoryId === category.id,
+    (product) =>
+      category.kind === "combo"
+        ? product.comboCategoryId === category.id
+        : product.categoryId === category.id,
   );
   const picture = document.createElement("picture");
   const mobileSource = document.createElement("source");
@@ -1159,6 +1232,7 @@ export async function mountProductCards(container) {
     applyStoreSettings(nextCatalog.settings);
     renderCategoryFilters();
     renderCategoryBanners();
+    renderComboShowcase();
     renderProductGrid();
     syncProductRoute();
   };

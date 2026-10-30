@@ -9,7 +9,9 @@
     "heroDescription": "Um convite para explorar, experimentar e se expressar sem pedir licença. O seu estilo é o protagonista.",
     "heroImage": "/assets/catalog/rehva-store-cover.jpg",
     "promoCode": "REHVA10",
-    "promoPercent": 10
+    "promoPercent": 10,
+    "entryScreenEnabled": true,
+    "introAnimationEnabled": true
   },
   "categories": [
     {

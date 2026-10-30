@@ -92,7 +92,7 @@ function validateCatalog(catalog) {
       categoryNames.has(normalizedCategoryName)
       ||
       (category.kind !== undefined &&
-        !["filter", "banner"].includes(category.kind))
+       !["filter", "banner", "combo"].includes(category.kind))
       ||
       !["desktopImage", "mobileImage", "title", "subtitle", "buttonLabel"].every(
         (key) =>
@@ -106,7 +106,7 @@ function validateCatalog(catalog) {
       (category.mobileImage !== undefined &&
         !isAllowedImageUrl(category.mobileImage))
       ||
-      ((category.kind === "banner" ||
+      ((category.kind === "banner" || category.kind === "combo" ||
         (category.kind === undefined && category.desktopImage)) &&
         (!isAllowedImageUrl(category.desktopImage) ||
           !isAllowedImageUrl(category.mobileImage)))
@@ -118,6 +118,9 @@ function validateCatalog(catalog) {
     }
     categoryIds.add(category.id);
     categoryNames.add(normalizedCategoryName);
+  }
+  if (catalog.categories.filter((category) => category.kind === "combo").length > 1) {
+    throw httpError(400, "Só pode existir uma categoria de kits/combos.");
   }
 
   const productIds = new Set();
@@ -134,6 +137,9 @@ function validateCatalog(catalog) {
       product.description.length > 3000 ||
       (product.catalogOnly !== undefined &&
         typeof product.catalogOnly !== "boolean") ||
+      (product.comboCategoryId !== undefined &&
+        product.comboCategoryId !== null &&
+        typeof product.comboCategoryId !== "string") ||
       !Number.isSafeInteger(product.priceCents) ||
       product.priceCents < 0 ||
       !(
@@ -156,6 +162,16 @@ function validateCatalog(catalog) {
       )
     ) {
       throw httpError(400, "Há um produto inválido ou sem uma categoria válida.");
+    }
+    if (
+      product.comboCategoryId !== undefined &&
+      product.comboCategoryId !== null &&
+      !catalog.categories.some(
+        (category) =>
+          category.id === product.comboCategoryId && category.kind === "combo",
+      )
+    ) {
+      throw httpError(400, `O carrossel de kits do produto "${product.name}" é inválido.`);
     }
     productIds.add(product.id);
 
@@ -271,6 +287,14 @@ function validateCatalog(catalog) {
     !isAllowedImageUrl(catalog.settings.heroImage)
   ) {
     throw httpError(400, "As configurações de imagem ou promoção são inválidas.");
+  }
+  for (const key of ["entryScreenEnabled", "introAnimationEnabled"]) {
+    if (
+      catalog.settings[key] !== undefined &&
+      typeof catalog.settings[key] !== "boolean"
+    ) {
+      throw httpError(400, `A configuração "${key}" é inválida.`);
+    }
   }
 
   return catalog;
