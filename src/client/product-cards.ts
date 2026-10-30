@@ -1334,6 +1334,8 @@ function renderProductDetails(productId, preferredVariant = 0) {
 
   renderGallery();
   gallery.append(mainImageFrame);
+  const leftColumn = createElement("div", "product-detail__left-column");
+  leftColumn.append(gallery, descriptionPanel);
   info.append(
     eyebrow,
     title,
@@ -1345,7 +1347,7 @@ function renderProductDetails(productId, preferredVariant = 0) {
   if (sizeSelector) info.append(sizeSelector);
   info.append(addToCartButton);
   info.append(purchaseButton);
-  layout.append(gallery, info, descriptionPanel);
+  layout.append(leftColumn, info);
   content.append(breadcrumbs, backButton, layout, imageViewer);
   root.replaceChildren(content);
   root.hidden = false;

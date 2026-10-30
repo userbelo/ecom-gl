@@ -65,6 +65,16 @@ function sanitizeDescriptionMarkup(markup) {
 function setupDescriptionEditor() {
   const editor = document.querySelector("#product-description");
   if (!editor) return;
+  const editorPanel = document.querySelector("#product-description-editing");
+  const preview = document.querySelector("#product-description-preview");
+  const editButton = document.querySelector("#product-description-edit");
+  editButton.addEventListener("click", () => {
+    const isEditing = !editorPanel.hidden;
+    editorPanel.hidden = isEditing;
+    preview.hidden = !isEditing;
+    editButton.textContent = isEditing ? "Editar descrição" : "Fechar edição";
+    if (!isEditing) editor.focus();
+  });
   document.querySelectorAll("[data-description-format]").forEach((button) => {
     button.addEventListener("mousedown", (event) => event.preventDefault());
     button.addEventListener("click", () => {
@@ -326,6 +336,12 @@ function renderProductEditor() {
     product.reviewCount ?? 0;
   document.querySelector("#product-description").innerHTML =
     sanitizeDescriptionMarkup(product.description);
+  document.querySelector("#product-description-preview").innerHTML =
+    sanitizeDescriptionMarkup(product.description);
+  document.querySelector("#product-description-preview").hidden = false;
+  document.querySelector("#product-description-editing").hidden = true;
+  document.querySelector("#product-description-edit").textContent =
+    "Editar descrição";
   document.querySelector("#product-visibility").value =
     product.catalogOnly ? "category" : "store";
   const comboSelect = document.querySelector("#product-combo-category");

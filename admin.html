@@ -151,15 +151,19 @@
                   <span>Descrição do produto (SEO)</span>
                   <small>Use um título de seção, parágrafos curtos, negrito e listas para destacar benefícios e palavras-chave do produto.</small>
                   <div class="rich-editor">
-                    <div class="rich-editor__toolbar" role="toolbar" aria-label="Formatação da descrição">
-                      <button type="button" class="rich-editor__button" data-description-format="formatBlock" data-description-value="h2">H2</button>
-                      <button type="button" class="rich-editor__button" data-description-format="formatBlock" data-description-value="h3">H3</button>
-                      <button type="button" class="rich-editor__button" data-description-format="formatBlock" data-description-value="p">P</button>
-                      <button type="button" class="rich-editor__button" data-description-format="bold"><strong>B</strong></button>
-                      <button type="button" class="rich-editor__button" data-description-format="italic"><em>I</em></button>
-                      <button type="button" class="rich-editor__button" data-description-format="insertUnorderedList">• Lista</button>
+                    <div id="product-description-preview" class="rich-editor__preview" aria-live="polite"></div>
+                    <button id="product-description-edit" class="rich-editor__edit" type="button">Editar descrição</button>
+                    <div id="product-description-editing" hidden>
+                      <div class="rich-editor__toolbar" role="toolbar" aria-label="Formatação da descrição">
+                        <button type="button" class="rich-editor__button" data-description-format="formatBlock" data-description-value="h2">H2</button>
+                        <button type="button" class="rich-editor__button" data-description-format="formatBlock" data-description-value="h3">H3</button>
+                        <button type="button" class="rich-editor__button" data-description-format="formatBlock" data-description-value="p">P</button>
+                        <button type="button" class="rich-editor__button" data-description-format="bold"><strong>B</strong></button>
+                        <button type="button" class="rich-editor__button" data-description-format="italic"><em>I</em></button>
+                        <button type="button" class="rich-editor__button" data-description-format="insertUnorderedList">• Lista</button>
+                      </div>
+                      <div id="product-description" class="rich-editor__content" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escreva uma descrição clara, útil e otimizada para buscas..." spellcheck="true"></div>
                     </div>
-                    <div id="product-description" class="rich-editor__content" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escreva uma descrição clara, útil e otimizada para buscas..." spellcheck="true"></div>
                   </div>
                 </label>
                 <label class="field field--wide">
