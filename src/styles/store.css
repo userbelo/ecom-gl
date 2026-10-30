@@ -1400,7 +1400,9 @@ a:focus-visible {
 
 .store.is-product-detail .hero,
 .store.is-product-detail .collection-section,
-.store.is-product-detail .site-footer {
+.store.is-product-detail .site-footer,
+.store.is-product-detail .announcement-bar,
+.store.is-product-detail .site-header {
   display: none;
 }
 
