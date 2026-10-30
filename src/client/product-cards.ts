@@ -935,6 +935,7 @@ function renderProductDetails(productId, preferredVariant = 0) {
   });
 
   const layout = createElement("div", "product-detail__layout");
+  const productHeader = createElement("header", "product-detail__header");
   const gallery = createElement("div", "product-detail__gallery");
   const mainImageFrame = createElement("div", "product-detail__main-image");
   const imageTrack = createElement("div", "product-detail__image-track");
@@ -1270,9 +1271,8 @@ function renderProductDetails(productId, preferredVariant = 0) {
   );
 
   renderGallery();
-  gallery.append(eyebrow, title, mainImageFrame);
-  const leftColumn = createElement("div", "product-detail__left-column");
-  leftColumn.append(gallery, descriptionPanel);
+  productHeader.append(eyebrow, title);
+  gallery.append(mainImageFrame);
   info.append(
     rating,
     price,
@@ -1282,8 +1282,8 @@ function renderProductDetails(productId, preferredVariant = 0) {
   if (sizeSelector) info.append(sizeSelector);
   info.append(addToCartButton);
   info.append(purchaseButton);
-  layout.append(leftColumn, info);
-  content.append(breadcrumbs, backButton, layout, imageViewer);
+  layout.append(gallery, info);
+  content.append(breadcrumbs, backButton, productHeader, layout, descriptionPanel, imageViewer);
   root.replaceChildren(content);
   root.hidden = false;
   root.dataset.productId = product.id;
