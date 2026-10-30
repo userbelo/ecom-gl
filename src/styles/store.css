@@ -1455,11 +1455,8 @@ a:focus-visible {
   gap: clamp(36px, 7vw, 96px);
 }
 
-.product-detail__left-column {
-  min-width: 0;
-}
-
 .product-detail__description-panel {
+  grid-column: 1 / -1;
   margin-top: 22px;
   padding: 28px 0 8px;
   border-top: 1px solid #efdbe4;
@@ -1714,7 +1711,7 @@ a:focus-visible {
 }
 
 .product-detail__title {
-  margin: 15px 0 0;
+  margin: 15px 0 26px;
   font-family: var(--serif);
   font-size: clamp(38px, 4vw, 58px);
   font-weight: 600;
@@ -2161,6 +2158,7 @@ a:focus-visible {
   }
 
   .product-detail__description-panel {
+    grid-column: 1;
     margin-top: 0;
   }
 

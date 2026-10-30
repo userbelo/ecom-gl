@@ -1270,12 +1270,8 @@ function renderProductDetails(productId, preferredVariant = 0) {
   );
 
   renderGallery();
-  gallery.append(mainImageFrame);
-  const leftColumn = createElement("div", "product-detail__left-column");
-  leftColumn.append(gallery, descriptionPanel);
+  gallery.append(eyebrow, title, mainImageFrame);
   info.append(
-    eyebrow,
-    title,
     rating,
     price,
     variantsHeading,
@@ -1284,7 +1280,7 @@ function renderProductDetails(productId, preferredVariant = 0) {
   if (sizeSelector) info.append(sizeSelector);
   info.append(addToCartButton);
   info.append(purchaseButton);
-  layout.append(leftColumn, info);
+  layout.append(gallery, info, descriptionPanel);
   content.append(breadcrumbs, backButton, layout, imageViewer);
   root.replaceChildren(content);
   root.hidden = false;
