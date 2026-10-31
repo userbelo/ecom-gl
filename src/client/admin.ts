@@ -408,6 +408,13 @@ function renderVariants(product) {
     variant.images.forEach((imageUrl, imageIndex) => {
       const field = createElement("div", "image-upload");
       field.append(createElement("span", "", `FOTO ${imageIndex + 1}`));
+      field.append(
+        createElement(
+          "small",
+          "image-upload__hint",
+          "Tamanho recomendado: 1000 × 1250 px (proporção 4:5).",
+        ),
+      );
       const preview = document.createElement("img");
       preview.src = imageUrl;
       preview.alt = `Prévia da imagem ${imageIndex + 1}, opção ${variant.label}`;
