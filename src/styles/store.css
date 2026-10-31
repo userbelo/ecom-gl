@@ -971,7 +971,7 @@ a:focus-visible {
 }
 
 .combo-showcase__card .product-card__media {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
 }
 
 .combo-showcase__card .product-card__description,
