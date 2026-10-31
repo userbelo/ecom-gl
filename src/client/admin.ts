@@ -480,7 +480,53 @@ closeProductEditor.addEventListener("click", () => {
 
 function renderCategories() {
   categoryList.replaceChildren();
-  catalog.categories.forEach((category) => {
+  const categoryGroups = [
+    {
+      kind: "filter",
+      title: "Filtros da vitrine",
+      description: 'Categorias que aparecem ao lado do filtro “Todos”.',
+    },
+    {
+      kind: "banner",
+      title: "Banners em carrossel",
+      description: "Banners exibidos acima dos produtos. Use as setas para mudar a ordem.",
+    },
+    {
+      kind: "combo",
+      title: "Kits e combos",
+      description: "Categorias usadas no carrossel especial de kits e combos.",
+    },
+  ];
+  categoryGroups.forEach((group) => {
+    const groupCategories = catalog.categories.filter(
+      (category) => getCategoryKind(category) === group.kind,
+    );
+    const section = createElement("section", `category-group category-group--${group.kind}`);
+    const groupHeader = createElement("header", "category-group__header");
+    const groupTitle = createElement("div", "category-group__title");
+    groupTitle.append(
+      createElement("h3", "", group.title),
+      createElement("p", "", group.description),
+    );
+    groupHeader.append(
+      groupTitle,
+      createElement(
+        "span",
+        "category-group__count",
+        `${groupCategories.length} ${groupCategories.length === 1 ? "categoria" : "categorias"}`,
+      ),
+    );
+    const groupList = createElement("div", "category-group__items");
+    if (!groupCategories.length) {
+      groupList.append(
+        createElement(
+          "p",
+          "category-group__empty",
+          "Nenhuma categoria deste tipo cadastrada.",
+        ),
+      );
+    }
+    groupCategories.forEach((category) => {
     const row = createElement("div", "category-row");
     const heading = createElement("div", "category-row__heading");
     const name = createElement("strong", "", category.name);
@@ -501,6 +547,29 @@ function renderCategories() {
     );
     heading.append(name, usage);
     const actions = createElement("div", "category-row__actions");
+    if (getCategoryKind(category) === "banner") {
+      const banners = catalog.categories.filter(
+        (entry) => getCategoryKind(entry) === "banner",
+      );
+      const bannerPosition = banners.findIndex((entry) => entry.id === category.id);
+      const bannerOrder = createElement("div", "category-row__order");
+      const moveUp = createElement("button", "category-row__move", "↑");
+      moveUp.type = "button";
+      moveUp.disabled = bannerPosition === 0;
+      moveUp.setAttribute("aria-label", `Mover banner ${category.name} para cima`);
+      moveUp.addEventListener("click", async () => {
+        await moveBannerCategory(category.id, -1);
+      });
+      const moveDown = createElement("button", "category-row__move", "↓");
+      moveDown.type = "button";
+      moveDown.disabled = bannerPosition === banners.length - 1;
+      moveDown.setAttribute("aria-label", `Mover banner ${category.name} para baixo`);
+      moveDown.addEventListener("click", async () => {
+        await moveBannerCategory(category.id, 1);
+      });
+      bannerOrder.append(moveUp, moveDown);
+      actions.append(bannerOrder);
+    }
     const rename = document.createElement("input");
     rename.value = category.name;
     rename.maxLength = 80;
@@ -627,8 +696,37 @@ function renderCategories() {
     if (usageCount > 0) actions.append(transferTarget);
     actions.append(saveName, remove);
     row.append(heading, rename, fields, actions);
-    categoryList.append(row);
+    groupList.append(row);
+    });
+    section.append(groupHeader, groupList);
+    categoryList.append(section);
   });
+}
+
+async function moveBannerCategory(categoryId, direction) {
+  const bannerIndexes = catalog.categories
+    .map((category, index) =>
+      getCategoryKind(category) === "banner" ? index : -1,
+    )
+    .filter((index) => index >= 0);
+  const currentPosition = bannerIndexes.findIndex(
+    (index) => catalog.categories[index].id === categoryId,
+  );
+  const targetPosition = currentPosition + direction;
+  if (
+    currentPosition < 0 ||
+    targetPosition < 0 ||
+    targetPosition >= bannerIndexes.length
+  ) {
+    return;
+  }
+  const currentIndex = bannerIndexes[currentPosition];
+  const targetIndex = bannerIndexes[targetPosition];
+  [catalog.categories[currentIndex], catalog.categories[targetIndex]] = [
+    catalog.categories[targetIndex],
+    catalog.categories[currentIndex],
+  ];
+  await persistCatalog("Ordem dos banners atualizada.");
 }
 
 function readPriceCents(value) {

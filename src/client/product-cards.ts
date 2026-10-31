@@ -166,7 +166,7 @@ function getDescriptionText(description) {
   return (template.content.textContent || "").replace(/\s+/g, " ").trim();
 }
 
-function getDescriptionSummary(description, maxLength = 120) {
+function getDescriptionSummary(description, maxLength = 72) {
   const text = getDescriptionText(description);
   return text.length > maxLength
     ? `${text.slice(0, maxLength).replace(/\s+\S*$/, "")}…`
