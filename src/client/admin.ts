@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { sanitizeProductDescription } from "./rich-description";
 import {
   getCatalog,
   login,
@@ -96,6 +97,25 @@ editorStepButtons.forEach((button) => {
 });
 document.querySelectorAll("[data-step-next]").forEach((button) => {
   button.addEventListener("click", () => setEditorStep(button.dataset.stepNext));
+});
+
+const descriptionEditor = document.querySelector("#product-description-editor");
+document.querySelectorAll("[data-description-command]").forEach((button) => {
+  button.addEventListener("mousedown", (event) => event.preventDefault());
+  button.addEventListener("click", () => {
+    descriptionEditor.focus();
+    const command = button.dataset.descriptionCommand;
+    document.execCommand(
+      command,
+      false,
+      button.dataset.descriptionValue || null,
+    );
+    descriptionEditor.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+});
+descriptionEditor.addEventListener("input", () => {
+  document.querySelector("#product-description").value =
+    sanitizeProductDescription(descriptionEditor.innerHTML);
 });
 
 function createDefaultSizeChart() {
@@ -321,6 +341,8 @@ function renderProductEditor() {
     product.reviewCount ?? 0;
   document.querySelector("#product-description").value =
     product.description || "";
+  const descriptionEditor = document.querySelector("#product-description-editor");
+  descriptionEditor.innerHTML = sanitizeProductDescription(product.description);
   document.querySelector("#product-visibility").value =
     product.catalogOnly ? "category" : "store";
   const comboSelect = document.querySelector("#product-combo-category");
@@ -1023,11 +1045,15 @@ productForm.addEventListener("submit", async (event) => {
     }
     product.reviewRating = reviewRating;
     product.reviewCount = reviewCount;
-    product.description = document
-      .querySelector("#product-description")
-      .value.trim();
+    product.description = sanitizeProductDescription(
+      descriptionEditor.innerHTML,
+    ).trim();
+    document.querySelector("#product-description").value = product.description;
     if (!product.description) {
       throw new Error("Informe uma descrição para o produto.");
+    }
+    if (product.description.length > 3000) {
+      throw new Error("A descrição formatada excede o limite de 3.000 caracteres.");
     }
     product.catalogOnly =
       document.querySelector("#product-visibility").value === "category";

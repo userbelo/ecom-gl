@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { getCatalog, watchCatalog } from "./firebase";
+import { sanitizeProductDescription } from "./rich-description";
 
 let products = [
   {
@@ -253,7 +254,7 @@ function createPurchaseAction(
   return link;
 }
 
-function updateMobilePurchaseBar(product, selectedSize = null) {
+function updateMobilePurchaseBar(product, selectedSize = null, onAddToCart) {
   let bar = document.querySelector("#mobile-purchase-bar");
   if (!bar) {
     bar = createElement("div", "mobile-purchase-bar");
@@ -274,12 +275,28 @@ function updateMobilePurchaseBar(product, selectedSize = null) {
       ),
     );
   }
-  const action = createPurchaseAction(
-    product,
+  const action = createElement(
+    "button",
     "mobile-purchase-bar__action",
-    "COMPRAR ↗",
-    { requiresSize, getSelectedSize: () => selectedSize },
+    requiresSize && !selectedSize ? "ESCOLHA O TAMANHO" : "ADICIONAR À SACOLA",
   );
+  action.type = "button";
+  action.setAttribute(
+    "aria-label",
+    requiresSize && !selectedSize
+      ? "Escolha um tamanho brasileiro antes de adicionar à sacola"
+      : `Adicionar ${product.name} à sacola`,
+  );
+  action.addEventListener("click", () => {
+    if (requiresSize && !selectedSize) {
+      document.querySelector("#tamanhos")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      return;
+    }
+    onAddToCart();
+  });
   bar.replaceChildren(summary, action);
   bar.hidden = false;
   document.body.classList.add("has-mobile-purchase-bar");
@@ -932,6 +949,19 @@ function renderProductDetails(productId, preferredVariant = 0) {
   const currentVariant = () => product.variants[currentVariantIndex];
 
   const content = createElement("div", "product-detail__inner");
+  const topbar = createElement("div", "product-detail__topbar");
+  const brand = document.createElement("a");
+  brand.className = "product-detail__brand";
+  brand.href = "#inicio";
+  brand.setAttribute("aria-label", "REHVA — início");
+  const brandLogo = document.createElement("img");
+  brandLogo.src = "/assets/brand/logo.png";
+  brandLogo.alt = "REHVA";
+  brand.append(brandLogo);
+  const cartTrigger = document.querySelector("#cart-trigger");
+  topbar.append(brand);
+  if (cartTrigger) topbar.append(cartTrigger);
+
   const breadcrumbs = createElement("nav", "product-detail__breadcrumbs");
   breadcrumbs.setAttribute("aria-label", "Você está em");
   const collectionLink = createElement("a", "", "A COLEÇÃO");
@@ -1070,13 +1100,31 @@ function renderProductDetails(productId, preferredVariant = 0) {
   const price = createPriceDisplay(product, "product-detail__price");
   const descriptionPanel = createElement("section", "product-detail__description-panel");
   const descriptionHeading = createElement(
-    "h2",
+    "button",
     "product-detail__description-heading",
-    "Descrição do produto",
+    "DESCRIÇÃO",
   );
+  descriptionHeading.type = "button";
+  descriptionHeading.setAttribute("aria-expanded", "true");
+  descriptionHeading.setAttribute("aria-controls", "product-description-content");
+  const descriptionIcon = createElement(
+    "span",
+    "product-detail__description-icon",
+    "−",
+  );
+  descriptionIcon.setAttribute("aria-hidden", "true");
+  descriptionHeading.append(descriptionIcon);
   const description = createElement("div", "product-detail__description");
-  description.textContent =
-    getDescriptionText(product.description) || "Descrição do produto em breve.";
+  description.id = "product-description-content";
+  description.innerHTML =
+    sanitizeProductDescription(product.description) ||
+    "<p>Descrição do produto em breve.</p>";
+  descriptionHeading.addEventListener("click", () => {
+    const expanded = descriptionHeading.getAttribute("aria-expanded") === "true";
+    descriptionHeading.setAttribute("aria-expanded", String(!expanded));
+    description.hidden = expanded;
+    descriptionIcon.textContent = expanded ? "+" : "−";
+  });
   descriptionPanel.append(descriptionHeading, description);
   const variantsHeading = createElement(
     "h2",
@@ -1234,17 +1282,32 @@ function renderProductDetails(productId, preferredVariant = 0) {
             `Comprar ${product.name} — abre o checkout em outra aba`,
           );
         }
-        updateMobilePurchaseBar(product, selectedSize);
+        updateMobilePurchaseBar(product, selectedSize, () => {
+          addToCart(product, currentVariantIndex, selectedSize);
+        });
       });
       sizeChoices.append(choice);
     });
 
     const chartHeading = createElement(
-      "h3",
-      "product-detail__chart-heading",
-      "Tabela de medidas (cm)",
+      "button",
+      "product-detail__chart-toggle",
+      "VER TABELA DE MEDIDAS",
     );
+    chartHeading.type = "button";
+    chartHeading.setAttribute("aria-expanded", "false");
     const tableWrap = createElement("div", "product-detail__chart-wrap");
+    tableWrap.id = "tabela-medidas";
+    tableWrap.hidden = true;
+    chartHeading.setAttribute("aria-controls", tableWrap.id);
+    chartHeading.addEventListener("click", () => {
+      const isExpanded = chartHeading.getAttribute("aria-expanded") === "true";
+      chartHeading.setAttribute("aria-expanded", String(!isExpanded));
+      tableWrap.hidden = isExpanded;
+      chartHeading.textContent = isExpanded
+        ? "VER TABELA DE MEDIDAS"
+        : "OCULTAR TABELA DE MEDIDAS";
+    });
     const table = document.createElement("table");
     table.className = "product-detail__chart";
     const tableHead = document.createElement("thead");
@@ -1296,6 +1359,7 @@ function renderProductDetails(productId, preferredVariant = 0) {
   productHeader.append(eyebrow, title);
   gallery.append(mainImageFrame);
   info.append(
+    productHeader,
     rating,
     price,
     variantsHeading,
@@ -1306,9 +1370,9 @@ function renderProductDetails(productId, preferredVariant = 0) {
   info.append(purchaseButton);
   layout.append(gallery, info);
   content.append(
+    topbar,
     breadcrumbs,
     backButton,
-    productHeader,
     layout,
     descriptionPanel,
     createRecommendations(product),
@@ -1319,9 +1383,20 @@ function renderProductDetails(productId, preferredVariant = 0) {
   root.dataset.productId = product.id;
   store.classList.add("is-product-detail");
   productDetailsVisible = true;
-  updateMobilePurchaseBar(product, selectedSize);
+  updateMobilePurchaseBar(product, selectedSize, () => {
+    addToCart(product, currentVariantIndex, selectedSize);
+  });
   window.scrollTo(0, 0);
   title.focus({ preventScroll: true });
+}
+
+function restoreCartTrigger() {
+  const cartTrigger = document.querySelector("#cart-trigger");
+  const header = document.querySelector(".site-header");
+  const promoCode = document.querySelector("#promo-code");
+  if (cartTrigger && header && promoCode) {
+    header.insertBefore(cartTrigger, promoCode);
+  }
 }
 
 function syncProductRoute() {
@@ -1334,6 +1409,7 @@ function syncProductRoute() {
 
   const categoryPage = document.querySelector("#category-page");
   if (categoryId && renderCategoryPage(categoryId)) {
+    restoreCartTrigger();
     root.hidden = true;
     document.querySelector("#category-banners").hidden = true;
     document.querySelector("#colecao").hidden = true;
@@ -1360,6 +1436,7 @@ function syncProductRoute() {
   }
 
   root.hidden = true;
+  restoreCartTrigger();
   root.replaceChildren();
   delete root.dataset.productId;
   store.classList.remove("is-product-detail");

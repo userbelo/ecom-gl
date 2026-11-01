@@ -154,7 +154,20 @@
                 </label>
                 <label class="field field--wide">
                   <span>Descrição do produto</span>
-                  <textarea id="product-description" name="description" rows="8" maxlength="3000" placeholder="Digite a descrição do produto"></textarea>
+                  <div class="rich-description-editor">
+                    <div class="rich-description-toolbar" role="toolbar" aria-label="Formatação da descrição">
+                      <button type="button" data-description-command="bold" aria-label="Negrito"><strong>B</strong></button>
+                      <button type="button" data-description-command="italic" aria-label="Itálico"><em>I</em></button>
+                      <button type="button" data-description-command="formatBlock" data-description-value="p" aria-label="Parágrafo">P</button>
+                      <button type="button" data-description-command="formatBlock" data-description-value="h3" aria-label="Subtítulo">H</button>
+                      <button type="button" data-description-command="insertUnorderedList" aria-label="Lista com marcadores">• Lista</button>
+                      <button type="button" data-description-command="justifyCenter" aria-label="Centralizar">Centralizar</button>
+                      <button type="button" data-description-command="justifyLeft" aria-label="Alinhar à esquerda">À esquerda</button>
+                    </div>
+                    <div id="product-description-editor" class="rich-description-content" contenteditable="true" role="textbox" aria-label="Conteúdo da descrição do produto" aria-multiline="true"></div>
+                    <textarea id="product-description" name="description" rows="8" maxlength="3000" hidden></textarea>
+                  </div>
+                  <small>Use os botões para formatar. Um formato como o da vitrine pode ter um parágrafo centralizado, um subtítulo em negrito e uma lista com marcadores.</small>
                 </label>
                 <label class="field field--wide">
                   <span>Link de checkout ou HTML do botão Yampi</span>
