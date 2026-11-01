@@ -2061,22 +2061,36 @@ a:focus-visible {
   background: var(--deep-pink);
 }
 
-.product-detail__chart-heading {
+.product-detail__chart-toggle {
   display: inline-flex;
-  min-height: 38px;
+  min-height: 30px;
   align-items: center;
-  gap: 8px;
-  margin: 12px 0 0;
-  padding: 0;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding: 0 2px;
   border: 0;
-  color: var(--deep-pink);
+  color: #806679;
   background: transparent;
   cursor: pointer;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  transition: color 160ms ease;
+}
+
+.product-detail__chart-toggle:hover {
+  color: var(--deep-pink);
+}
+
+.product-detail__chart-chevron {
+  color: var(--deep-pink);
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.product-detail__chart-toggle[aria-expanded="true"] .product-detail__chart-chevron {
+  transform: rotate(180deg);
 }
 
 .product-detail__chart-toggle:focus-visible {
@@ -2457,11 +2471,6 @@ a:focus-visible {
     min-height: 44px;
     border-radius: 4px;
     font-size: 13px;
-  }
-
-  .product-detail__chart-toggle {
-    margin-top: 14px;
-    font-size: 11px;
   }
 
   .product-detail__chart-wrap {

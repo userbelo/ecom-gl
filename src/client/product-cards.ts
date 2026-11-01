@@ -1289,24 +1289,34 @@ function renderProductDetails(productId, preferredVariant = 0) {
       sizeChoices.append(choice);
     });
 
-    const chartHeading = createElement(
-      "button",
-      "product-detail__chart-toggle",
-      "VER TABELA DE MEDIDAS",
+    const chartToggle = createElement("button", "product-detail__chart-toggle");
+    chartToggle.type = "button";
+    chartToggle.setAttribute("aria-expanded", "false");
+    chartToggle.setAttribute("aria-label", "Ver tabela de medidas");
+    const chartLabel = createElement(
+      "span",
+      "",
+      "Tabela de medidas",
     );
-    chartHeading.type = "button";
-    chartHeading.setAttribute("aria-expanded", "false");
+    const chartChevron = createElement(
+      "span",
+      "product-detail__chart-chevron",
+      "⌄",
+    );
+    chartChevron.setAttribute("aria-hidden", "true");
+    chartToggle.append(chartLabel, chartChevron);
     const tableWrap = createElement("div", "product-detail__chart-wrap");
     tableWrap.id = "tabela-medidas";
     tableWrap.hidden = true;
-    chartHeading.setAttribute("aria-controls", tableWrap.id);
-    chartHeading.addEventListener("click", () => {
-      const isExpanded = chartHeading.getAttribute("aria-expanded") === "true";
-      chartHeading.setAttribute("aria-expanded", String(!isExpanded));
+    chartToggle.setAttribute("aria-controls", tableWrap.id);
+    chartToggle.addEventListener("click", () => {
+      const isExpanded = chartToggle.getAttribute("aria-expanded") === "true";
+      chartToggle.setAttribute("aria-expanded", String(!isExpanded));
       tableWrap.hidden = isExpanded;
-      chartHeading.textContent = isExpanded
-        ? "VER TABELA DE MEDIDAS"
-        : "OCULTAR TABELA DE MEDIDAS";
+      chartToggle.setAttribute(
+        "aria-label",
+        isExpanded ? "Ver tabela de medidas" : "Ocultar tabela de medidas",
+      );
     });
     const table = document.createElement("table");
     table.className = "product-detail__chart";
@@ -1342,7 +1352,7 @@ function renderProductDetails(productId, preferredVariant = 0) {
     });
     table.append(tableHead, tableBody);
     tableWrap.append(table);
-    sizeSelector.append(sizeHeading, sizeChoices, chartHeading, tableWrap);
+    sizeSelector.append(sizeHeading, sizeChoices, chartToggle, tableWrap);
   }
 
   const purchaseButton = createPurchaseAction(
