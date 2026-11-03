@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Participe do grupo da REHVA no WhatsApp e acompanhe novidades, lançamentos e promoções."
+      content="Explore a coleção REHVA, escolha suas peças e monte combinações personalizadas."
     />
     <meta name="theme-color" content="#c90067" />
-    <title>REHVA — em breve</title>
+    <title>REHVA | Moda feminina</title>
     <link rel="stylesheet" href="/src/styles/entry.css" />
     <script type="module" src="/src/client/entry.ts"></script>
   </head>
@@ -117,6 +117,7 @@
           <nav class="main-navigation" aria-label="Navegação principal">
             <a href="#inicio">Início</a>
             <a href="#colecao">A coleção</a>
+            <a href="#kits">Monte seu kit</a>
             <a href="#sobre">Nosso universo</a>
           </nav>
           <button class="cart-trigger" id="cart-trigger" type="button" aria-label="Abrir sacola" aria-haspopup="dialog" aria-controls="cart-dialog">
@@ -128,30 +129,6 @@
             <span class="cart-trigger__count" id="cart-count" aria-live="polite">0</span>
             <span class="visually-hidden" id="cart-feedback" role="status" aria-live="polite"></span>
           </button>
-          <button
-            class="promo-ticket"
-            id="promo-code"
-            type="button"
-            aria-label="Copiar cupom REHVA10 para 10% de desconto"
-            aria-describedby="promo-feedback"
-          >
-            <span class="promo-ticket__main">
-              <span class="promo-ticket__eyebrow" id="promo-eyebrow">UM PRESENTE REHVA</span>
-              <strong class="promo-ticket__offer" id="promo-offer">10% OFF</strong>
-              <span class="promo-ticket__instruction">COPIE SEU CÓDIGO</span>
-              <span class="promo-ticket__code" id="promo-code-label">REHVA10</span>
-            </span>
-            <span class="promo-ticket__stub" aria-hidden="true">
-              <span>REHVA CLUB</span>
-              <span class="promo-ticket__copy-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="8" y="8" width="12" height="12" rx="2" />
-                  <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
-                </svg>
-              </span>
-            </span>
-          </button>
-          <span class="visually-hidden" id="promo-feedback" role="status" aria-live="polite"></span>
         </header>
 
         <dialog class="cart-dialog" id="cart-dialog" aria-labelledby="cart-title">
@@ -162,14 +139,55 @@
             </div>
             <button class="cart-dialog__close" id="cart-close" type="button" aria-label="Fechar sacola">×</button>
           </div>
-          <div class="cart-dialog__items" id="cart-items"></div>
-          <div class="cart-dialog__footer">
-            <div class="cart-dialog__total">
-              <span>Total</span>
-              <strong id="cart-total">R$ 0,00</strong>
+          <section class="cart-kit-progress" id="cart-kit-progress" aria-live="polite" hidden>
+            <div class="cart-kit-progress__heading">
+              <span class="cart-kit-progress__icon" aria-hidden="true">✦</span>
+              <div>
+                <strong id="cart-kit-progress-title"></strong>
+                <span id="cart-kit-progress-copy"></span>
+              </div>
+              <span class="cart-kit-progress__discount" id="cart-kit-progress-discount"></span>
             </div>
+            <div
+              class="cart-kit-progress__track"
+              id="cart-kit-progress-track"
+              role="progressbar"
+              aria-label="Progresso para o próximo desconto"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <span id="cart-kit-progress-fill"></span>
+            </div>
+          </section>
+          <div class="cart-dialog__items" id="cart-items"></div>
+          <section class="cart-kit-cta" id="cart-kit-cta" hidden>
+            <div>
+              <span aria-hidden="true">✧</span>
+              <div>
+                <strong>LEVE 2 PEÇAS E GANHE 10% OFF</strong>
+                <p>Monte seu kit e economize mais, com frete grátis.</p>
+              </div>
+            </div>
+            <a href="#kits" id="cart-kit-link">MONTAR MEU KIT <span aria-hidden="true">↗</span></a>
+          </section>
+          <div class="cart-dialog__footer">
+            <section class="cart-dialog__summary" id="cart-summary" aria-labelledby="cart-summary-title" hidden>
+              <h3 id="cart-summary-title">Resumo do pedido</h3>
+              <div class="cart-dialog__summary-rows" id="cart-summary-rows"></div>
+              <div class="cart-dialog__shipping">
+                <span>Frete</span>
+                <strong><span aria-hidden="true">▰</span> GRÁTIS</strong>
+              </div>
+              <p class="cart-dialog__savings" id="cart-savings"></p>
+              <div class="cart-dialog__total">
+                <span>Total estimado</span>
+                <strong id="cart-total">R$ 0,00</strong>
+              </div>
+            </section>
             <p class="cart-dialog__notice" id="cart-notice" role="status" aria-live="polite"></p>
-            <a class="cart-dialog__checkout" id="cart-checkout" hidden>FINALIZAR COMPRA ↗</a>
+            <button class="cart-dialog__checkout" id="cart-checkout" type="button" hidden>GARANTIR DESCONTO E FINALIZAR COMPRA ↗</button>
+            <p class="cart-dialog__checkout-note" id="cart-checkout-note" hidden></p>
           </div>
         </dialog>
 
@@ -231,6 +249,13 @@
           class="category-page"
           id="category-page"
           aria-labelledby="category-page-title"
+          hidden
+        ></section>
+
+        <section
+          class="kit-builder"
+          id="kit-builder"
+          aria-labelledby="kit-builder-title"
           hidden
         ></section>
 

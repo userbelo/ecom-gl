@@ -63,6 +63,7 @@
             <nav class="admin-tabs" aria-label="Seções da administração">
               <button class="admin-tab is-active" type="button" data-tab="products">Produtos</button>
               <button class="admin-tab" type="button" data-tab="categories">Categorias</button>
+              <button class="admin-tab" type="button" data-tab="kits">Kits</button>
               <button class="admin-tab" type="button" data-tab="store-settings">Conteúdo da loja</button>
             </nav>
             <button class="button button--secondary" id="admin-logout" type="button">Sair da conta</button>
@@ -74,7 +75,10 @@
             <p class="admin-eyebrow">CATÁLOGO</p>
             <h2 id="products-heading">Produtos</h2>
           </div>
-          <button class="button button--primary" id="new-product" type="button">＋ Novo produto</button>
+          <div class="admin-section-heading__actions">
+            <button class="button button--secondary" id="export-yampi-products" type="button">Baixar JSON Yampi</button>
+            <button class="button button--primary" id="new-product" type="button">＋ Novo produto</button>
+          </div>
         </div>
         <div class="product-admin-layout">
           <aside class="product-list" aria-label="Produtos cadastrados">
@@ -170,11 +174,6 @@
                   <small>Use os botões para formatar. Um formato como o da vitrine pode ter um parágrafo centralizado, um subtítulo em negrito e uma lista com marcadores.</small>
                 </label>
                 <label class="field field--wide">
-                  <span>Link de checkout ou HTML do botão Yampi</span>
-                  <textarea id="product-checkout" name="checkoutUrl" rows="3" placeholder="Cole o link HTTPS ou o trecho HTML do botão de checkout"></textarea>
-                  <small>O painel extrai e salva somente o endereço HTTPS do checkout; o HTML não é executado.</small>
-                </label>
-                <label class="field field--wide">
                   <span>Link do fornecedor (uso interno)</span>
                   <input id="product-supplier-url" name="supplierUrl" type="url" maxlength="2048" placeholder="https://..." />
                   <small>Este endereço fica salvo apenas no cadastro administrativo e não aparece na loja.</small>
@@ -230,7 +229,13 @@
                 </div>
                 <button class="button button--secondary" id="add-variant" type="button">＋ Adicionar cor</button>
               </div>
+              <p class="admin-help">Cadastre um link de compra Yampi por cor e tamanho. A loja e a montagem de kits usam os mesmos links; a Yampi aplica automaticamente o desconto conforme a quantidade de peças no pedido.</p>
               <div class="variant-editor-list" id="variant-editor-list"></div>
+              <div class="field field--wide">
+                <span>Links de compra Yampi por cor e tamanho</span>
+                <small>Use os links normais dos produtos. Os descontos de 10%, 15% e 20% são automáticos na Yampi e dependem da quantidade total de peças no checkout.</small>
+                <div class="checkout-link-matrix" id="checkout-link-matrix"></div>
+              </div>
               <div class="editor-step-navigation editor-step-navigation--end">
                 <button class="button button--secondary" type="button" data-step-next="2">← Voltar para tamanhos</button>
               </div>
@@ -293,6 +298,66 @@
         <div class="category-list" id="category-list" aria-label="Categorias separadas por tipo"></div>
       </section>
 
+      <section class="admin-panel" id="panel-kits" aria-labelledby="kits-heading" hidden>
+        <div class="admin-section-heading">
+          <div>
+            <p class="admin-eyebrow">VENDA POR COMBINAÇÃO</p>
+            <h2 id="kits-heading">Página de kits</h2>
+          </div>
+        </div>
+        <p class="admin-help">A página reúne os produtos cadastrados para a cliente escolher cor, tamanho e faixa de desconto. A montagem envia os links normais e as quantidades; a Yampi aplica automaticamente a promoção correspondente ao total de peças. O cupom de primeira compra não é enviado nem deve acumular com o desconto do kit. Configure as promoções na Yampi como não cumulativas e mantenha os percentuais abaixo alinhados.</p>
+        <form class="editor-form" id="kit-settings-form">
+          <div class="form-grid">
+            <label class="field field--wide">
+              <span class="checkbox-field">
+                <input id="kit-enabled" type="checkbox" />
+                <span>Publicar a página de montagem de kits</span>
+              </span>
+              <small>Ao desativar, o link da página deixa a navegação e uma visita direta retorna à loja.</small>
+            </label>
+            <label class="field field--wide">
+              <span>Título da página</span>
+              <input id="kit-title" maxlength="100" required />
+            </label>
+            <label class="field field--wide">
+              <span>Texto de apresentação</span>
+              <textarea id="kit-subtitle" rows="3" maxlength="300" required></textarea>
+            </label>
+            <label class="field field--wide">
+              <span>Banner desktop (1360 × 314 px)</span>
+              <input id="kit-desktop-banner" type="text" inputmode="url" maxlength="2048" placeholder="URL HTTPS ou caminho da imagem local" />
+              <small>Recomendado: 1360 × 314 px, proporção aproximada 4,33:1. O banner substitui o título e o texto de apresentação nessa tela.</small>
+            </label>
+            <label class="field field--wide">
+              <span>Banner mobile (750 × 380 px)</span>
+              <input id="kit-mobile-banner" type="text" inputmode="url" maxlength="2048" placeholder="URL HTTPS ou caminho da imagem local" />
+              <small>Recomendado: 750 × 380 px, proporção aproximada 1,97:1. Crie uma arte própria para celular para evitar cortes no título, preço e outros elementos da imagem.</small>
+            </label>
+          </div>
+          <div class="kit-admin-tiers">
+            <div class="kit-admin-tiers__heading">
+              <h3>Descontos por quantidade</h3>
+              <p>Os preços e a economia são estimados na página. A Yampi aplica somente o desconto automático da quantidade no checkout, sem acumular o cupom de primeira compra.</p>
+            </div>
+            <div class="kit-admin-tier">
+              <strong>2 unidades</strong>
+              <label class="field"><span>Desconto (%)</span><input id="kit-tier-2-percent" type="number" min="0" max="100" step="1" required /></label>
+            </div>
+            <div class="kit-admin-tier">
+              <strong>3 unidades</strong>
+              <label class="field"><span>Desconto (%)</span><input id="kit-tier-3-percent" type="number" min="0" max="100" step="1" required /></label>
+            </div>
+            <div class="kit-admin-tier">
+              <strong>4 ou mais unidades</strong>
+              <label class="field"><span>Desconto (%)</span><input id="kit-tier-4-percent" type="number" min="0" max="100" step="1" required /></label>
+            </div>
+          </div>
+          <div class="form-actions form-actions--end">
+            <button class="button button--primary" type="submit">Salvar página de kits</button>
+          </div>
+        </form>
+      </section>
+
       <section class="admin-panel" id="panel-store-settings" aria-labelledby="settings-heading" hidden>
         <div class="admin-section-heading">
           <div>
@@ -351,13 +416,22 @@
               </span>
               <small>Desative para entrar diretamente na loja após a tela inicial.</small>
             </label>
+            <div class="field field--wide">
+              <span>Cupons exibidos na página de produto</span>
+              <small>O cupom de primeira compra fica disponível para copiar na página de produto, mas não é aplicado à página de kits nem deve acumular com as promoções de quantidade. Configure as ofertas de kit na Yampi como não cumulativas. O percentual de recompra aparece bloqueado; seu código só deve ser configurado quando houver confirmação segura de compra pela Yampi.</small>
+            </div>
             <label class="field">
-              <span>Código promocional</span>
-              <input id="setting-promo-code" maxlength="40" />
+              <span>Cupom da primeira compra</span>
+              <input id="setting-first-purchase-coupon-code" maxlength="40" required />
             </label>
             <label class="field">
-              <span>Desconto (%)</span>
-              <input id="setting-promo-percent" type="number" min="0" max="100" step="1" />
+              <span>Desconto da primeira compra (%)</span>
+              <input id="setting-first-purchase-coupon-percent" type="number" min="0" max="100" step="1" required />
+            </label>
+            <label class="field">
+              <span>Percentual do cupom da próxima compra</span>
+              <input id="setting-repeat-purchase-coupon-percent" type="number" min="0" max="100" step="1" required />
+              <small>O código não é salvo no catálogo público. Configure-o quando a confirmação de compra estiver integrada.</small>
             </label>
           </div>
           <div class="form-actions form-actions--end">

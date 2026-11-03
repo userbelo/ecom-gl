@@ -8,10 +8,25 @@
     "heroTitleLine2": "na palma da sua mão.",
     "heroDescription": "Um convite para explorar, experimentar e se expressar sem pedir licença. O seu estilo é o protagonista.",
     "heroImage": "/assets/catalog/rehva-store-cover.jpg",
-    "promoCode": "REHVA10",
-    "promoPercent": 10,
+    "promoCode": "REHVA5",
+    "promoPercent": 5,
+    "firstPurchaseCouponCode": "REHVA5",
+    "firstPurchaseCouponPercent": 5,
+    "repeatPurchaseCouponPercent": 10,
     "entryScreenEnabled": true,
-    "introAnimationEnabled": true
+    "introAnimationEnabled": true,
+    "kitBuilder": {
+      "enabled": true,
+      "title": "Monte seu kit",
+      "subtitle": "Escolha suas peças, combine suas cores e monte uma seleção com a sua personalidade.",
+      "desktopBanner": "",
+      "mobileBanner": "",
+      "tiers": [
+        { "minItems": 2, "discountPercent": 10 },
+        { "minItems": 3, "discountPercent": 15 },
+        { "minItems": 4, "discountPercent": 20 }
+      ]
+    }
   },
   "categories": [
     {

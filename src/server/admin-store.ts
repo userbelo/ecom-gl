@@ -172,8 +172,11 @@ function validateCatalog(catalog) {
       !Array.isArray(product.variants) ||
       product.variants.length < 1 ||
       product.variants.length > 30 ||
-      typeof product.checkoutUrl !== "string" ||
-      product.checkoutUrl.length > 2048 ||
+      !(
+        product.checkoutLinks === undefined ||
+        (Array.isArray(product.checkoutLinks) &&
+          product.checkoutLinks.length <= 3600)
+      ) ||
       !(
         product.supplierUrl === undefined ||
         (typeof product.supplierUrl === "string" &&
@@ -228,18 +231,6 @@ function validateCatalog(catalog) {
       }
     }
 
-    if (product.checkoutUrl) {
-      let checkoutUrl;
-      try {
-        checkoutUrl = new URL(product.checkoutUrl);
-      } catch {
-        throw httpError(400, `O link de checkout de "${product.name}" é inválido.`);
-      }
-      if (checkoutUrl.protocol !== "https:") {
-        throw httpError(400, `O checkout de "${product.name}" precisa usar HTTPS.`);
-      }
-    }
-
     if (product.supplierUrl) {
       let supplierUrl;
       try {
@@ -275,6 +266,66 @@ function validateCatalog(catalog) {
         throw httpError(400, `Há uma opção inválida em "${product.name}".`);
       }
       variantIds.add(variant.id);
+    }
+
+    const checkoutCombinations = new Set();
+    for (const link of product.checkoutLinks ?? []) {
+      if (!link || typeof link !== "object" || Array.isArray(link)) {
+        throw httpError(
+          400,
+          `Há um link de checkout inválido para "${product.name}".`,
+        );
+      }
+      const validSize =
+        product.sizeChart == null
+          ? link.size === null
+          : typeof link.size === "string" &&
+            product.sizeChart.some((size) => size.size.trim() === link.size);
+      const kitTierMinItems = link.kitTierMinItems ?? null;
+      if (
+        typeof link.variantId !== "string" ||
+        typeof link.url !== "string" ||
+        link.url.length > 2048 ||
+        ![null, 2, 3, 4].includes(kitTierMinItems)
+      ) {
+        throw httpError(
+          400,
+          `Há um link de checkout inválido para "${product.name}".`,
+        );
+      }
+      let checkoutUrl;
+      try {
+        checkoutUrl = new URL(link.url);
+      } catch {
+        throw httpError(
+          400,
+          `Há um link de checkout inválido para "${product.name}".`,
+        );
+      }
+      const combinationKey = JSON.stringify([
+        link.variantId,
+        link.size,
+        kitTierMinItems,
+      ]);
+      if (
+        !variantIds.has(link.variantId) ||
+        !validSize ||
+        checkoutUrl.protocol !== "https:" ||
+        !/\.pay\.yampi\.com\.br$/i.test(checkoutUrl.hostname) ||
+        checkoutUrl.username ||
+        checkoutUrl.password ||
+        checkoutUrl.port ||
+        !/^\/r\/[a-z0-9]+$/i.test(checkoutUrl.pathname) ||
+        checkoutUrl.search ||
+        checkoutUrl.hash ||
+        checkoutCombinations.has(combinationKey)
+      ) {
+        throw httpError(
+          400,
+          `Há um link de checkout inválido ou duplicado para "${product.name}".`,
+        );
+      }
+      checkoutCombinations.add(combinationKey);
     }
   }
 
@@ -327,6 +378,26 @@ function validateCatalog(catalog) {
   ) {
     throw httpError(400, "As configurações de imagem ou promoção são inválidas.");
   }
+  const firstPurchaseCode = catalog.settings.firstPurchaseCouponCode;
+  const firstPurchasePercent = catalog.settings.firstPurchaseCouponPercent;
+  const repeatPurchasePercent = catalog.settings.repeatPurchaseCouponPercent;
+  if (
+    (firstPurchaseCode !== undefined &&
+      (typeof firstPurchaseCode !== "string" ||
+        !firstPurchaseCode.trim() ||
+        firstPurchaseCode.length > 40 ||
+        !/^[a-z0-9_-]+$/i.test(firstPurchaseCode))) ||
+    (firstPurchasePercent !== undefined &&
+      (!Number.isInteger(firstPurchasePercent) ||
+        firstPurchasePercent < 0 ||
+        firstPurchasePercent > 100)) ||
+    (repeatPurchasePercent !== undefined &&
+      (!Number.isInteger(repeatPurchasePercent) ||
+        repeatPurchasePercent < 0 ||
+        repeatPurchasePercent > 100))
+  ) {
+      throw httpError(400, "As configurações dos cupons da loja são inválidas.");
+  }
   for (const key of ["entryScreenEnabled", "introAnimationEnabled"]) {
     if (
       catalog.settings[key] !== undefined &&
@@ -334,6 +405,53 @@ function validateCatalog(catalog) {
     ) {
       throw httpError(400, `A configuração "${key}" é inválida.`);
     }
+  }
+  if (catalog.settings.kitBuilder !== undefined) {
+    const kitBuilder = catalog.settings.kitBuilder;
+    if (
+      !kitBuilder ||
+      typeof kitBuilder !== "object" ||
+      Array.isArray(kitBuilder) ||
+      typeof kitBuilder.enabled !== "boolean" ||
+      typeof kitBuilder.title !== "string" ||
+      !kitBuilder.title.trim() ||
+      kitBuilder.title.length > 100 ||
+      typeof kitBuilder.subtitle !== "string" ||
+      !kitBuilder.subtitle.trim() ||
+      kitBuilder.subtitle.length > 300 ||
+      !["desktopBanner", "mobileBanner"].every(
+        (key) =>
+          kitBuilder[key] === undefined ||
+          (typeof kitBuilder[key] === "string" &&
+            (kitBuilder[key] === "" ||
+              isAllowedImageUrl(kitBuilder[key]))),
+      ) ||
+      !Array.isArray(kitBuilder.tiers) ||
+      ![3, 4].includes(kitBuilder.tiers.length)
+    ) {
+      throw httpError(400, "As configurações da página de kits são inválidas.");
+    }
+    const expectedThresholds =
+      kitBuilder.tiers.length === 3 ? [2, 3, 4] : [2, 3, 4, 5];
+    kitBuilder.tiers.forEach((tier, index) => {
+      if (
+        !tier ||
+        typeof tier !== "object" ||
+        tier.minItems !== expectedThresholds[index] ||
+        !Number.isInteger(tier.discountPercent) ||
+        tier.discountPercent < 0 ||
+        tier.discountPercent > 100 ||
+        (tier.couponCode !== undefined &&
+          (typeof tier.couponCode !== "string" ||
+            tier.couponCode.length > 40 ||
+            !/^[a-z0-9_-]*$/i.test(tier.couponCode)))
+      ) {
+        throw httpError(
+          400,
+          "Uma faixa de desconto da página de kits é inválida.",
+        );
+      }
+    });
   }
 
   return catalog;

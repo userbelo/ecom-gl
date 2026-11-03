@@ -43,6 +43,40 @@ function getCategoryKind(category) {
   return category.kind || (category.desktopImage || category.mobileImage ? "banner" : "filter");
 }
 
+function getKitBuilderSettings(settings = catalog.settings) {
+  const defaults = {
+    enabled: true,
+    title: "Monte seu kit",
+    subtitle:
+      "Escolha suas peças, combine suas cores e monte uma seleção com a sua personalidade.",
+    desktopBanner: "",
+    mobileBanner: "",
+    tiers: [
+      { minItems: 2, discountPercent: 10 },
+      { minItems: 3, discountPercent: 15 },
+      { minItems: 4, discountPercent: 20 },
+    ],
+  };
+  const saved = settings.kitBuilder ?? {};
+  const isLegacyTierConfig =
+    Array.isArray(saved.tiers) &&
+    saved.tiers.some((tier) => tier.minItems === 5);
+  const savedTierByMinItems = (minItems) =>
+    Array.isArray(saved.tiers)
+      ? saved.tiers.find((savedTier) => savedTier.minItems === minItems)
+      : undefined;
+  return {
+    ...defaults,
+    ...saved,
+    tiers: defaults.tiers.map((tier) => ({
+      ...tier,
+      ...(!isLegacyTierConfig
+        ? savedTierByMinItems(tier.minItems)
+        : null),
+    })),
+  };
+}
+
 function getComboCategories() {
   return catalog.categories.filter((category) => getCategoryKind(category) === "combo");
 }
@@ -223,7 +257,11 @@ function renderSizeChart(product) {
       sizeInput.value = size.size;
       sizeInput.setAttribute("aria-label", `Tamanho BR da linha ${index + 1}`);
       sizeInput.addEventListener("input", () => {
+        const previousSize = size.size;
         size.size = sizeInput.value;
+        product.checkoutLinks?.forEach((entry) => {
+          if (entry.size === previousSize) entry.size = size.size;
+        });
       });
       sizeCell.append(sizeInput);
       row.append(sizeCell);
@@ -265,6 +303,9 @@ function renderSizeChart(product) {
       );
       remove.addEventListener("click", () => {
         if (product.sizeChart.length <= 1) return;
+        product.checkoutLinks = (product.checkoutLinks ?? []).filter(
+          (entry) => entry.size !== size.size,
+        );
         product.sizeChart.splice(index, 1);
         renderSizeChart(product);
       });
@@ -273,6 +314,104 @@ function renderSizeChart(product) {
       return row;
     }),
   );
+  renderCheckoutLinkMatrix(product);
+}
+
+function renderCheckoutLinkMatrix(product) {
+  const container = document.querySelector("#checkout-link-matrix");
+  if (!container) return;
+  const sizes = product.sizeChart?.length ? product.sizeChart : [null];
+  const details = document.createElement("details");
+  details.className = "checkout-link-tier";
+  details.open = true;
+  const summary = document.createElement("summary");
+  summary.append(
+    createElement("strong", "", "Links de compra"),
+    createElement(
+      "small",
+      "",
+      "Os mesmos links são usados na loja e na montagem de kits; a Yampi aplica automaticamente o desconto pela quantidade.",
+    ),
+  );
+  const table = document.createElement("table");
+  table.className = "checkout-link-table";
+  const head = document.createElement("thead");
+  const header = document.createElement("tr");
+  header.append(createElement("th", "", "Cor"));
+  sizes.forEach((size) => {
+    const cell = createElement(
+      "th",
+      "",
+      size?.size || (product.sizeChart ? "Tamanho" : "Link de compra"),
+    );
+    cell.scope = "col";
+    header.append(cell);
+  });
+  head.append(header);
+  const body = document.createElement("tbody");
+  product.variants.forEach((variant, variantIndex) => {
+    const row = document.createElement("tr");
+    const colorCell = createElement(
+      "th",
+      "",
+      variant.label || `Opção ${variantIndex + 1}`,
+    );
+    colorCell.scope = "row";
+    row.append(colorCell);
+    sizes.forEach((size, sizeIndex) => {
+      const cell = document.createElement("td");
+      const input = document.createElement("input");
+      input.type = "url";
+      input.maxLength = 2048;
+      input.inputMode = "url";
+      input.placeholder = "https://loja.pay.yampi.com.br/r/...";
+      input.setAttribute(
+        "aria-label",
+        `Link Yampi para ${variant.label || `opção ${variantIndex + 1}`}${size ? `, tamanho ${size.size}` : ""}`,
+      );
+      input.dataset.variantIndex = String(variantIndex);
+      input.dataset.sizeIndex = product.sizeChart ? String(sizeIndex) : "-1";
+      input.value =
+        product.checkoutLinks?.find(
+          (entry) =>
+            entry.variantId === variant.id &&
+            (entry.size ?? null) === (size?.size ?? null) &&
+            (entry.kitTierMinItems ?? null) === null,
+        )?.url ?? "";
+      input.addEventListener("input", () => {
+        const currentVariant = product.variants[variantIndex];
+        const sizeValue = product.sizeChart
+          ? product.sizeChart[sizeIndex]?.size
+          : null;
+        const url = input.value.trim();
+        const links = product.checkoutLinks ?? [];
+        const matchIndex = links.findIndex(
+          (entry) =>
+            entry.variantId === currentVariant.id &&
+            (entry.size ?? null) === (sizeValue ?? null) &&
+            (entry.kitTierMinItems ?? null) === null,
+        );
+        if (!url) {
+          if (matchIndex >= 0) links.splice(matchIndex, 1);
+        } else if (matchIndex >= 0) {
+          links[matchIndex].url = url;
+        } else {
+          links.push({
+            variantId: currentVariant.id,
+            size: sizeValue ?? null,
+            url,
+          });
+        }
+        product.checkoutLinks = links;
+      });
+      cell.append(input);
+      row.append(cell);
+    });
+    body.append(row);
+  });
+  table.append(head, body);
+  details.append(summary, table);
+  container.replaceChildren(details);
 }
 
 function renderProductList() {
@@ -357,7 +496,6 @@ function renderProductEditor() {
     }),
   );
   comboSelect.value = product.comboCategoryId ?? "";
-  document.querySelector("#product-checkout").value = product.checkoutUrl;
   document.querySelector("#product-supplier-url").value =
     product.supplierUrl ?? "";
   const hasSizes = Array.isArray(product.sizeChart);
@@ -382,6 +520,7 @@ function renderProductEditor() {
     renderProductRecommendations(product);
   };
   renderVariants(product);
+  renderCheckoutLinkMatrix(product);
 }
 
 function renderVariants(product) {
@@ -395,6 +534,9 @@ function renderVariants(product) {
     remove.disabled = product.variants.length <= 1;
     remove.addEventListener("click", () => {
       if (product.variants.length <= 1) return;
+      product.checkoutLinks = (product.checkoutLinks ?? []).filter(
+        (entry) => entry.variantId !== variant.id,
+      );
       product.variants.splice(index, 1);
       renderVariants(product);
     });
@@ -409,7 +551,11 @@ function renderVariants(product) {
     nameInput.required = true;
     nameInput.addEventListener("input", () => {
       variant.label = nameInput.value;
+      const previousId = variant.id;
       variant.id = slugify(nameInput.value) || `opcao-${index + 1}`;
+      product.checkoutLinks?.forEach((entry) => {
+        if (entry.variantId === previousId) entry.variantId = variant.id;
+      });
     });
     nameField.append(nameInput);
 
@@ -493,6 +639,7 @@ function renderVariants(product) {
     card.append(header, fields, imageFields, addImage);
     variantEditorList.append(card);
   });
+  renderCheckoutLinkMatrix(product);
 }
 
 function selectProduct(productId) {
@@ -789,30 +936,160 @@ function validateImageUrl(value, productName, variantLabel, imageIndex) {
   }
 }
 
-function extractCheckoutUrl(input) {
-  const value = input.trim();
-  let checkoutUrl = value;
-  if (value.includes("<")) {
-    const document = new DOMParser().parseFromString(value, "text/html");
-    const anchor = document.querySelector("a[href]");
-    if (!anchor) {
-      throw new Error("Não encontrei um link no código HTML do botão Yampi.");
-    }
-    checkoutUrl = anchor.getAttribute("href") || "";
-  }
-  if (!checkoutUrl) return "";
-
+function normalizeYampiCheckoutLink(value) {
   let parsedUrl;
   try {
-    parsedUrl = new URL(checkoutUrl);
+    parsedUrl = new URL(value);
   } catch {
-    throw new Error("Informe um link HTTPS válido ou o HTML de um botão com link.");
+    throw new Error("Informe um link válido de checkout de variante da Yampi.");
   }
-  if (parsedUrl.protocol !== "https:") {
-    throw new Error("O checkout precisa usar um endereço HTTPS.");
+  if (
+    parsedUrl.protocol !== "https:" ||
+    !/\.pay\.yampi\.com\.br$/i.test(parsedUrl.hostname) ||
+    parsedUrl.username ||
+    parsedUrl.password ||
+    parsedUrl.port ||
+    !/^\/r\/[a-z0-9]+$/i.test(parsedUrl.pathname) ||
+    parsedUrl.search ||
+    parsedUrl.hash
+  ) {
+    throw new Error("Use o link de compra da variante, no formato HTTPS /r/...");
   }
   return parsedUrl.href;
 }
+
+function readCheckoutLinks(product) {
+  const matrix = document.querySelector("#checkout-link-matrix");
+  if (!matrix) return product.checkoutLinks ?? [];
+
+  const links = [];
+  matrix
+    .querySelectorAll("input[data-variant-index]")
+    .forEach((input) => {
+      const url = input.value.trim();
+      if (!url) return;
+      const variant = product.variants[Number(input.dataset.variantIndex)];
+      const sizeIndex = Number(input.dataset.sizeIndex);
+      if (!variant) {
+        throw new Error("Uma combinação de checkout está sem cor correspondente.");
+      }
+      const size =
+        sizeIndex >= 0 ? product.sizeChart?.[sizeIndex]?.size ?? null : null;
+      if (sizeIndex >= 0 && !size) {
+        throw new Error("Uma combinação de checkout está sem tamanho correspondente.");
+      }
+      links.push({
+        variantId: variant.id,
+        size,
+        url: normalizeYampiCheckoutLink(url),
+      });
+    });
+  return links;
+}
+
+function exportYampiProducts() {
+  if (!catalog?.products) {
+    throw new Error("O catálogo ainda não foi carregado.");
+  }
+
+  let invalidLinkCount = 0;
+  let optionCount = 0;
+  const exportedProducts = catalog.products
+    .filter((product) => product.active !== false)
+    .map((product) => {
+      const variants = product.variants
+        .map((variant) => {
+          const options = (product.checkoutLinks ?? [])
+            .filter(
+              (entry) =>
+                entry.variantId === variant.id &&
+                (entry.kitTierMinItems ?? null) === null,
+            )
+            .flatMap((entry) => {
+              if (
+                product.sizeChart?.length &&
+                !product.sizeChart.some((size) => size.size === entry.size)
+              ) {
+                return [];
+              }
+              try {
+                const checkoutUrl = normalizeYampiCheckoutLink(entry.url);
+                const token = new URL(checkoutUrl).pathname.slice(3);
+                optionCount += 1;
+                return [
+                  {
+                    size: entry.size ?? null,
+                    token,
+                    checkoutUrl,
+                  },
+                ];
+              } catch {
+                invalidLinkCount += 1;
+                return [];
+              }
+            });
+          return {
+            id: variant.id,
+            color: variant.label,
+            colorHex: variant.color,
+            options,
+          };
+        })
+        .filter((variant) => variant.options.length > 0);
+
+      if (!variants.length) return null;
+      return {
+        id: product.id,
+        name: product.name,
+        categoryId: product.categoryId,
+        priceCents: product.priceCents,
+        promotionalPriceCents: product.promotionalPriceCents ?? null,
+        variants,
+      };
+    })
+    .filter(Boolean);
+
+  if (!exportedProducts.length) {
+    throw new Error("Nenhum produto possui link de compra Yampi válido.");
+  }
+
+  const exportData = {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    source: "Catálogo REHVA",
+    productsIncluded: exportedProducts.length,
+    optionsIncluded: optionCount,
+    products: exportedProducts,
+  };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `rehva-produtos-yampi-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  const skippedMessage = invalidLinkCount
+    ? ` ${invalidLinkCount} link(s) inválido(s) foram ignorados.`
+    : "";
+  setStatus(
+    `JSON baixado: ${exportedProducts.length} produto(s), ${optionCount} combinação(ões).${skippedMessage}`,
+  );
+}
+
+document
+  .querySelector("#export-yampi-products")
+  .addEventListener("click", () => {
+    try {
+      exportYampiProducts();
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  });
 
 function renderEverything() {
   renderProductList();
@@ -860,8 +1137,23 @@ function renderSettings() {
     settings.entryScreenEnabled !== false;
   document.querySelector("#setting-intro-animation-enabled").checked =
     settings.introAnimationEnabled !== false;
-  document.querySelector("#setting-promo-code").value = settings.promoCode;
-  document.querySelector("#setting-promo-percent").value = settings.promoPercent;
+  document.querySelector("#setting-first-purchase-coupon-code").value =
+    settings.firstPurchaseCouponCode ?? "REHVA5";
+  document.querySelector("#setting-first-purchase-coupon-percent").value =
+    settings.firstPurchaseCouponPercent ?? 5;
+  document.querySelector("#setting-repeat-purchase-coupon-percent").value =
+    settings.repeatPurchaseCouponPercent ?? 10;
+  const kitSettings = getKitBuilderSettings(settings);
+  document.querySelector("#kit-enabled").checked = kitSettings.enabled;
+  document.querySelector("#kit-title").value = kitSettings.title;
+  document.querySelector("#kit-subtitle").value = kitSettings.subtitle;
+  document.querySelector("#kit-desktop-banner").value =
+    kitSettings.desktopBanner;
+  document.querySelector("#kit-mobile-banner").value = kitSettings.mobileBanner;
+  kitSettings.tiers.forEach((tier) => {
+    document.querySelector(`#kit-tier-${tier.minItems}-percent`).value =
+      tier.discountPercent;
+  });
 }
 
 document.querySelectorAll(".admin-tab").forEach((tab) => {
@@ -899,7 +1191,7 @@ document.querySelector("#new-product").addEventListener("click", () => {
     reviewRating: 4.5,
     reviewCount: 0,
     categoryId: catalog.categories[0].id,
-    checkoutUrl: "",
+    checkoutLinks: [],
     supplierUrl: "",
     sizeChart: null,
     variants: [
@@ -923,6 +1215,7 @@ document
     product.sizeChart = event.target.checked ? createDefaultSizeChart() : null;
     document.querySelector("#size-chart-editor").hidden = !event.target.checked;
     if (event.target.checked) renderSizeChart(product);
+    else renderCheckoutLinkMatrix(product);
   });
 
 document.querySelector("#add-size-row").addEventListener("click", () => {
@@ -975,7 +1268,6 @@ productForm.addEventListener("submit", async (event) => {
     if (!catalog.categories.some((category) => category.id === categoryId)) {
       throw new Error("Selecione uma categoria válida.");
     }
-    const checkoutInput = document.querySelector("#product-checkout").value;
     const supplierUrl = document
       .querySelector("#product-supplier-url")
       .value.trim();
@@ -990,12 +1282,16 @@ productForm.addEventListener("submit", async (event) => {
         throw new Error("O link do fornecedor precisa usar HTTP ou HTTPS.");
       }
     }
-    const variants = product.variants.map((variant) => ({
-      ...variant,
-      id: slugify(variant.label),
-      label: variant.label.trim(),
-      images: variant.images.map((image) => image.trim()),
-    }));
+    const variants = product.variants.map((variant) => {
+      const cleanVariant = { ...variant };
+      delete cleanVariant.yampiValue;
+      return {
+        ...cleanVariant,
+        id: slugify(variant.label),
+        label: variant.label.trim(),
+        images: variant.images.map((image) => image.trim()),
+      };
+    });
     variants.forEach((variant) => {
       if (!variant.id) {
         throw new Error("Cada cor ou opção precisa ter um nome válido.");
@@ -1072,12 +1368,20 @@ productForm.addEventListener("submit", async (event) => {
         ),
       ),
     );
-    product.checkoutUrl = extractCheckoutUrl(checkoutInput);
     product.supplierUrl = supplierUrl;
     product.sizeChart = document.querySelector("#product-has-sizes").checked
-      ? product.sizeChart
+      ? product.sizeChart.map((size) => {
+          const cleanSize = { ...size, size: size.size.trim() };
+          delete cleanSize.yampiValue;
+          return cleanSize;
+        })
       : null;
     product.variants = variants;
+    delete product.checkoutUrl;
+    delete product.yampiButtonUrl;
+    delete product.yampiColorVariationName;
+    delete product.yampiSizeVariationName;
+    product.checkoutLinks = readCheckoutLinks(product);
     await persistCatalog(`${name} salvo com sucesso.`, submitButton);
   } catch (error) {
     setButtonBusy(submitButton, false);
@@ -1169,12 +1473,46 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
   settings.introAnimationEnabled = document.querySelector(
     "#setting-intro-animation-enabled",
   ).checked;
-  settings.promoCode = document.querySelector("#setting-promo-code").value.trim();
-  settings.promoPercent = Number(
-    document.querySelector("#setting-promo-percent").value,
+  settings.firstPurchaseCouponCode = document
+    .querySelector("#setting-first-purchase-coupon-code")
+    .value.trim();
+  settings.firstPurchaseCouponPercent = Number(
+    document.querySelector("#setting-first-purchase-coupon-percent").value,
   );
+  settings.repeatPurchaseCouponPercent = Number(
+    document.querySelector("#setting-repeat-purchase-coupon-percent").value,
+  );
+  settings.promoCode = settings.firstPurchaseCouponCode;
+  settings.promoPercent = settings.firstPurchaseCouponPercent;
   await persistCatalog("Conteúdo da loja salvo.", submitButton);
 });
+
+document
+  .querySelector("#kit-settings-form")
+  .addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitButton = event.submitter;
+    const currentKitSettings = getKitBuilderSettings();
+    catalog.settings.kitBuilder = {
+      enabled: document.querySelector("#kit-enabled").checked,
+      title: document.querySelector("#kit-title").value.trim(),
+      subtitle: document.querySelector("#kit-subtitle").value.trim(),
+      desktopBanner: document
+        .querySelector("#kit-desktop-banner")
+        .value.trim(),
+      mobileBanner: document.querySelector("#kit-mobile-banner").value.trim(),
+      tiers: currentKitSettings.tiers.map((tier) => ({
+        minItems: tier.minItems,
+        discountPercent: Number(
+          document.querySelector(`#kit-tier-${tier.minItems}-percent`).value,
+        ),
+      })),
+    };
+    await persistCatalog(
+      "Configurações da página de kits salvas.",
+      submitButton,
+    );
+  });
 
 async function initialize() {
   try {
